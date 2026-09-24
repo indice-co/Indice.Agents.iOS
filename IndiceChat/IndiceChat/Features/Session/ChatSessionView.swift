@@ -83,6 +83,7 @@ struct ChatSessionView: View {
                 
                 MessageBox(
                     message: $message,
+                    response: nil, // viewModel.messages.last?.value,
                     isSending: viewModel.isSending,
                     canSend: canSendMessage,
                     send: {
@@ -105,6 +106,8 @@ struct ChatSessionView: View {
         @Binding var message: String
         @FocusState private var focus
         
+        let response: DexChatResponse?
+        
         let isSending: Bool
         let canSend  : Bool
         
@@ -112,40 +115,72 @@ struct ChatSessionView: View {
         let stop: () -> Void
         
         var body: some View {
-            HStack {
-                TextField("What's on your mind?", text: $message, axis: .vertical)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .focused($focus)
-                    .padding(.horizontal)
+            VStack {
+                HStack(alignment: .firstTextBaseline) {
+                    TextField("What's on your mind?", text: $message, axis: .vertical)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .focused($focus)
+                    
+                    if false, !message.isEmpty {
+                        Button(action: { message = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.top,     8)
+                .padding(.bottom,  4)
+                .onTapGesture { focus = true }
                 
-                if isSending {
-                    StopButton()
-                } else {
-                    SendButton()
+                HStack {
+                    if let usage = response?.usage, let maxLimit = usage.questionsLimitCount {
+                        HStack(spacing: 2) {
+                            Text((usage.questionsUsedCount ?? 0).formatted())
+                            Text("of")
+                            Text(maxLimit.formatted())
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    if isSending {
+                        StopButton()
+                    } else {
+                        SendButton()
+                    }
                 }
             }
             .padding(4)
-            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 32))
-            .onTapGesture { focus = true }
+            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 16))
+            
         }
         
-        @ViewBuilder
         private func SendButton() -> some View {
             Button(action: send) {
-                Image(systemName: "arrow.up.circle.fill")
+                Image(systemName: "arrow.up")
+                    .padding(8)
+                    .background(Color.accentColor, in: .circle)
+                    .shadow(radius: 4)
             }
-            .buttonStyle(.glassProminent)
+            .contentShape(.rect(corners: .concentric))
+            .buttonStyle(.plain)
             .transition(.opacity)
             .disabled(!canSend)
             .id("action_button")
         }
         
-        @ViewBuilder
         private func StopButton() -> some View {
             Button(action: stop) {
-                Image(systemName: "xmark.circle.fill")
+                Image(systemName: "stop.fill")
+                    .padding(8)
+                    .background(.red, in: .circle)
+                    .shadow(radius: 4)
             }
-            .buttonStyle(.glassProminent)
+            .contentShape(.rect(corners: .concentric))
+            .buttonStyle(.plain)
             .tint(.red)
             .transition(.opacity)
             .id("action_button")
@@ -184,6 +219,7 @@ extension EnvironmentValues {
     .safeAreaInset(edge: .bottom) {
         ChatSessionView.MessageBox(
             message: $message,
+            response: nil,
             isSending: isSending,
             canSend: !message.isEmpty,
             send: { Task {
