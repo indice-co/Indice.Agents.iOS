@@ -13,12 +13,35 @@ import IdentityClient
 
 public final class AgentsClient: @unchecked Sendable {
     
+    public struct Configuration {
+        let authURL: URL
+        let agentsURL: URL
+        
+        let clientID: String
+        let clientSecret: String?
+        
+        public init(authURL: URL, agentsURL: URL, clientID: String, clientSecret: String?) {
+            self.authURL = authURL
+            self.agentsURL = agentsURL
+            self.clientID = clientID
+            self.clientSecret = clientSecret
+        }
+    }
+    
     private let servicesLock = ReentrantSectionLock()
-    
-    private let authURL  : URL = .init(string: "https://my.indice.gr")!
-    private let agentsURL: URL = .init(string: "https://agents.indice.gr")!
-    
     private let identityClientURLS: IdentityClient::Client.Urls = .init(commonForRedirectScheme: "indice.mobile")
+    
+    private let configuration: Configuration
+    
+
+    /// Opt into the administrative document scope only when the identity client
+    /// registration and the signed-in user are allowed to ingest/clear documents.
+    public init(requestIngestionScope: Bool = false, configuration: Configuration) {
+        self.configuration = configuration
+        self.requestIngestionScope = requestIngestionScope
+    }
+    
+    
     
     private let requestIngestionScope: Bool
     private let tokenStorage = PersistentTokenStorage()
@@ -38,12 +61,12 @@ public final class AgentsClient: @unchecked Sendable {
                 
                 identityInstance = IdentityClient(
                     client: .init(
-                        id: "sample-mobile",
-                        secret: "e3541d17-d511-4dd9-9fdd-f12f7570ad2a",
+                        id: configuration.clientID,
+                        secret: configuration.clientSecret,
                         userScope: .defaultUserScopes + ["agents", "chat"] + (requestIngestionScope ? ["ingest"] : []),
                         appScope: [.identity],
                         urls: identityClientURLS),
-                    configuration: .init(baseUrl: self.authURL),
+                    configuration: .init(baseUrl: self.configuration.authURL),
                     currentDeviceInfoProvider: CurrentDeviceInfo(),
                     valueStorage: UserDefaults.standard,
                     tokenStorage: tokenStorage,
@@ -69,7 +92,7 @@ public final class AgentsClient: @unchecked Sendable {
             let authorization = StreamAuthorization(
                 credentials: { storage.streamCredentials },
                 refresh: { try await identity.authService.refreshTokens() })
-            let service = ChatService(repository: .init(endpoint: agentsURL, client: networkClient,
+            let service = ChatService(repository: .init(endpoint: self.configuration.agentsURL, client: networkClient,
                                                         streamAuthorization: authorization))
             chatsServiceInstance = service
             return service
@@ -80,7 +103,7 @@ public final class AgentsClient: @unchecked Sendable {
     public var agentsService: AgentsService {
         servicesLock.withLock {
             if let agentsServiceInstance { return agentsServiceInstance }
-            let service = AgentsService(repository: .init(endpoint: agentsURL, client: networkClient))
+            let service = AgentsService(repository: .init(endpoint: self.configuration.agentsURL, client: networkClient))
             agentsServiceInstance = service
             return service
         }
@@ -90,7 +113,7 @@ public final class AgentsClient: @unchecked Sendable {
     public var profileService: ProfileService {
         servicesLock.withLock {
             if let profileServiceInstance { return profileServiceInstance }
-            let service = ProfileService(repository: .init(endpoint: agentsURL, client: networkClient))
+            let service = ProfileService(repository: .init(endpoint: self.configuration.agentsURL, client: networkClient))
             profileServiceInstance = service
             return service
         }
@@ -100,7 +123,7 @@ public final class AgentsClient: @unchecked Sendable {
     public var documentsService: DocumentsService {
         servicesLock.withLock {
             if let documentsServiceInstance { return documentsServiceInstance }
-            let service = DocumentsService(repository: .init(endpoint: agentsURL, client: networkClient))
+            let service = DocumentsService(repository: .init(endpoint: self.configuration.agentsURL, client: networkClient))
             documentsServiceInstance = service
             return service
         }
@@ -110,18 +133,12 @@ public final class AgentsClient: @unchecked Sendable {
     public var sourcesService: SourcesService {
         servicesLock.withLock {
             if let sourcesServiceInstance { return sourcesServiceInstance }
-            let service = SourcesService(repository: .init(endpoint: agentsURL, client: networkClient))
+            let service = SourcesService(repository: .init(endpoint: self.configuration.agentsURL, client: networkClient))
             sourcesServiceInstance = service
             return service
         }
     }
 
-    /// Opt into the administrative document scope only when the identity client
-    /// registration and the signed-in user are allowed to ingest/clear documents.
-    public init(requestIngestionScope: Bool = false) {
-        self.requestIngestionScope = requestIngestionScope
-    }
-    
     public var canQuickLogin: Bool {
         tokenStorage.refreshToken != nil
     }

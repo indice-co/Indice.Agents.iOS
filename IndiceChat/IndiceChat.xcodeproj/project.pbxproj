@@ -8,10 +8,12 @@
 
 /* Begin PBXBuildFile section */
 		436606362FFD083B00EA03EF /* IndiceAgents in Frameworks */ = {isa = PBXBuildFile; productRef = 436606352FFD083B00EA03EF /* IndiceAgents */; };
+		438B55DE30656AEB0082A5CD /* agents.ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* IndiceChat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IndiceChat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = agents.ios.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -49,6 +51,7 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000010 /* IndiceChat */,
+				438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -126,6 +129,7 @@
 		000000000000000140000000 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
+				438B55DE30656AEB0082A5CD /* agents.ios.xcconfig in Resources */,
 			);
 		};
 /* End PBXResourcesBuildPhase section */
@@ -273,6 +277,7 @@
 		};
 		000000000000000111000000 /* Debug configuration for PBXNativeTarget "IndiceChat" */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -316,6 +321,7 @@
 		};
 		000000000000000112000000 /* Release configuration for PBXNativeTarget "IndiceChat" */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;

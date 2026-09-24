@@ -28,7 +28,13 @@ final class AppState: ViewModel {
         var list: [ConversationListItem]
     }
     
-    private let api = AgentsClient()
+    private let api = AgentsClient(
+        configuration: .init(
+            authURL: URL(string: "https://my.indice.gr")!,
+            agentsURL: URL(string: "https://agents.indice.gr")!,
+            clientID: Bundle.clientId,
+            clientSecret: Bundle.clientSecret)
+    )
     
     var chatService: ChatService { api.chatsService }
     
