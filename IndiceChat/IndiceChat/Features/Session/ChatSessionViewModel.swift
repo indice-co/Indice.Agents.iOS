@@ -20,6 +20,8 @@ final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {
     @Published private(set) var streamError: String?
     @Published var talkingToMySelf = false
 
+    @Published private(set) var title: String?
+    
     private var chat: ChatSessionService?
     private let service: ChatService
     private var sendTask: Task<Void, Never>?

@@ -47,12 +47,6 @@ struct ChatSessionView: View {
                             .id(message.id)
                             .environment(\.chatResponder, isLastMessage ? viewModel : nil)
                     }
-                    
-                    if isThinking {
-                        ThinkingBubble(message: viewModel.progressLabel ?? "Thinking...")
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .id("bubble_indicator")
-                    }
                 }
                 .padding()
                 
@@ -78,28 +72,25 @@ struct ChatSessionView: View {
             })
             .defaultScrollAnchor(.bottom)
             .animation(.easeInOut, value: viewModel.isLoading)
-            // .onChange(of: viewModel.messages.last, { _, _ in
-            //     guard let id = viewModel.messages.last?.id else { return }
-            // 
-            //     withAnimation {
-            //         if isThinking {
-            //             scroll.scrollTo("bubble_indicator", anchor: .bottom)
-            //         } else {
-            //             scroll.scrollTo(id, anchor: .bottom)
-            //         }
-            //     }
-            // })
         }
         .safeAreaBar(edge: .bottom, content: {
-            MessageBox(
-                message: $message,
-                isSending: viewModel.isSending,
-                canSend: canSendMessage,
-                send: {
-                    viewModel.post(message: message)
-                    message = ""
-                },
-                stop: { viewModel.stop() })
+            VStack(spacing: 8) {
+                ThinkingBubble(message: viewModel.progressLabel ?? "Thinking...")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .id("bubble_indicator")
+                    .opacity(isThinking ? 1 : 0)
+                    .animation(.easeInOut, value: isThinking)
+                
+                MessageBox(
+                    message: $message,
+                    isSending: viewModel.isSending,
+                    canSend: canSendMessage,
+                    send: {
+                        viewModel.post(message: message)
+                        message = ""
+                    },
+                    stop: { viewModel.stop() })
+            }
             .padding()
         })
         .onDisappear {

@@ -57,7 +57,7 @@ struct ChatListView: View {
                 guard let recent  = state.chatSections.first else { return }
                 guard let session = recent.list.first else { return }
                 
-                // open(chatId: session.id)
+                open(chatId: session.id)
             }
         }
         .toolbar(content: {

@@ -9,8 +9,8 @@ import SwiftUI
 
 struct ThinkingBubble: View {
     
-    private let dotSize: CGFloat = 8
-    private let offset : CGFloat = .pi * 0.25
+    private let dotSize: CGFloat = 4
+    private let offset : CGFloat = .pi * 0.125
     
     private var corners: (large: CGFloat, small: CGFloat) {
         let large = dotSize * 1.5
@@ -32,13 +32,63 @@ struct ThinkingBubble: View {
     
     let message: String?
     
+    @State private var animationState: CGFloat = 0
+    
     var body: some View {
+        HStack {
+            // MovingBalls()
+            Message()
+        }
+        .mask(alignment: .leading) {
+            GeometryReader { proxy in
+                let size     = proxy.size.height * 4
+                let movement = proxy.size.width * 1
+                let start    = proxy.size.width * -0.25
+                
+                Color.white.opacity(0.35)
+                
+                Circle()
+                    .fill(.white)
+                    .blur(radius: size / 2)
+                    .frame(width: size, height: size)
+                    .offset(x: start + animationState * movement)
+            }
+        }
+        .onAppear(perform: {
+            withAnimation(.easeInOut(duration: 3).repeatForever(autoreverses: true)) {
+                animationState = 1
+            }
+        })
+        .padding(dotSize)
+        // .modifier(BackgroundApplier(shape: shape))
+        .transition(
+            .move(edge: .top)
+            .combined(with: .opacity))
+    }
+ 
+    @ViewBuilder
+    private func Message() -> some View {
+        if let message {
+            VStack(spacing: 2) {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Color.brand
+                    .frame(height: 2)
+                    .clipShape(.capsule)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        }
+    }
+    
+    private func MovingBalls() -> some View {
         TimelineView(.animation) { context in
             let progress = context
                 .date
                 .timeIntervalSince1970
             
-            HStack(spacing: 2) {
+            HStack(spacing: 4) {
                 ForEach(0 ..< 3) { index in
                     
                     let phase = sin(progress * (CGFloat.pi * 2) + (CGFloat(index) * offset))
@@ -50,22 +100,11 @@ struct ThinkingBubble: View {
                             translationX: 0,
                             y: (dotSize / 2) * phase))
                 }
-                
-                if let message {
-                    Text(message)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
             }
             .frame(height: dotSize * 2)
         }
-        .padding(dotSize)
-        // .modifier(BackgroundApplier(shape: shape))
-        .transition(
-            .move(edge: .top)
-            .combined(with: .opacity))
     }
- 
+    
     private struct BackgroundApplier<S: Shape>: ViewModifier {
         let shape: S
         func body(content: Self.Content) -> some View {
@@ -77,4 +116,9 @@ struct ThinkingBubble: View {
         }
     }
     
+}
+
+
+#Preview {
+    ThinkingBubble(message: "Thinking hard")
 }
