@@ -17,27 +17,34 @@ struct MessageItemView: View {
     }
 
     var body: some View {
-        VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
-            ForEach(message.items) { item in
-                ChatContentItemView(
-                    item: item,
-                    isStreaming: message.delivery == .streaming)
-                .equatable()
-                .modifier(BackgroundApplier(isUser: isUser))
+        VStack(alignment: isUser ? .trailing : .leading, spacing: 0) {
+            if !isUser {
+                Dex.ImageAndName(size: .small)
+                    .padding(.top, 12)
             }
             
-            Citation(message: message)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            
-            if message.delivery == .cancelled {
-                Text("Stopped — partial reply")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
+                ForEach(message.items) { item in
+                    ChatContentItemView(
+                        item: item,
+                        isStreaming: message.delivery == .streaming)
+                    .equatable()
+                    .modifier(BackgroundApplier(isUser: isUser))
+                }
                 
-            } else if message.delivery == .interrupted {
-                Text("Incomplete reply")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Citation(message: message)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                if message.delivery == .cancelled {
+                    Text("Stopped — partial reply")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                } else if message.delivery == .interrupted {
+                    Text("Incomplete reply")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(isUser ? .leading : .trailing)
@@ -47,7 +54,7 @@ struct MessageItemView: View {
     private struct BackgroundApplier: ViewModifier {
         let isUser: Bool
         
-        private let userColor: Color = .accentColor.opacity(0.5)
+        private let userColor: Color = Color.brand
         private let agentColor: Color = .clear
         
         private let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)

@@ -114,6 +114,23 @@ enum ChatItem {
         }
     }
     
+    /// Keep the image's natural size when it fits; shrink wider images to fit.
+    struct IntrinsicImage: View {
+        let image: SwiftUI.Image
+        let caption: String?
+
+        var body: some View {
+            ViewThatFits(in: .horizontal) {
+                image.fixedSize()
+
+                image
+                    .resizable()
+                    .scaledToFit()
+            }
+            .accessibilityLabel(caption ?? "Image")
+        }
+    }
+
     struct Image: View {
         let data: Data
         let mediaType: String
@@ -126,10 +143,9 @@ enum ChatItem {
                 // as an image; the embedded document's scripts stay disabled.
                 ChatHTMLView(html: "<img alt=\"\" src=\"data:image/svg+xml;base64,\(data.base64EncodedString())\">")
             } else if let image = UIImage(data: data) {
-                SwiftUI.Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .accessibilityLabel(caption ?? "Image")
+                IntrinsicImage(
+                    image: SwiftUI.Image(uiImage: image),
+                    caption: caption)
             } else {
                 UnavailableType(
                     isLoading: isStreaming,
@@ -151,10 +167,7 @@ enum ChatItem {
                         .frame(maxWidth: .infinity, minHeight: 60)
                     
                 case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFit()
-                        .accessibilityLabel(caption ?? "Image")
+                    IntrinsicImage(image: image, caption: caption)
                     
                 case .failure: UnavailableType(isLoading: isStreaming, mediaType: nil)
                 @unknown default: UnavailableType(isLoading: isStreaming, mediaType: nil)
@@ -172,7 +185,7 @@ enum ChatItem {
         let content: String
         
         init(_ severity: Severity = .info, title: String?, content: String) {
-            self.severity = .error //severity
+            self.severity = severity
             self.title = title
             self.content = content
         }
@@ -249,37 +262,44 @@ enum ChatItem {
         let positive: String
         let negative: String
         
+        private func onChoice(_ choice: Choice) {
+            switch choice {
+            case .positive:
+                chatResponder?.response(withMessage: positive)
+            case .negative:
+                chatResponder?.response(withMessage: negative)
+            }
+        }
+        
         var body: some View {
             
-            VStack {
+            VStack(alignment: .leading) {
              
                 if let prompt {
                     Text(prompt)
+                        .font(.headline)
+                        .padding(.bottom)
                 }
                 
-                HStack {
-                    Button(role: .confirm, action: {
-                        chatResponder?.response(withMessage: positive)
-                    }) {
-                        Text(positive)
-                            .frame(maxWidth: .infinity)
-                        // .padding()
-                        // .glassEffect(.regular.interactive(), in: .capsule)
+                VStack(spacing: 16) {
+                    Button(action: { onChoice(.positive) }) {
+                        Text(positive).frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.glassProminent)
+                    .tint(Color.brand)
                     
-                    Button(role: .destructive, action: {
-                        chatResponder?.response(withMessage: negative)
-                    }) {
+                    Button(action: { onChoice(.negative) }) {
                         Text(negative)
                             .frame(maxWidth: .infinity)
-                        // .padding()
-                        // .glassEffect(.regular.interactive().tint(.red.opacity(0.5)), in: .capsule)
+                            
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
                 }
                 .disabled(chatResponder == nil)
             }
+            .padding()
+            .background(.quinary, in: .rect(cornerRadius: 12))
         }
     }
     
@@ -287,16 +307,63 @@ enum ChatItem {
         
         @Environment(\.chatResponder) var chatResponder
         
+        @State private var selected: String?
+        
         let options: [String]
         
+        private var canSubmit: Bool {
+            guard let selected else {
+                return false
+            }
+            
+            return options.contains(selected)
+        }
+        
+        func selectResponse(_ option: String) {
+            if selected == option {
+                selected = nil
+            } else {
+                selected = option
+            }
+        }
+        
+        func submit() {
+            guard let selected else { return }
+            
+            chatResponder?.response(withMessage: selected)
+        }
+        
         var body: some View {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 12) {
                 ForEach(options, id: \.self) { option in
-                    Button(option, action: { chatResponder?.response(withMessage: option) })
-                        .buttonStyle(.borderedProminent)
+                    Button(action: { selectResponse(option) }) {
+                        HStack(alignment: .firstTextBaseline) {
+                            let isSelected = option == selected
+                            
+                            SwiftUI
+                                .Image(systemName: isSelected ? "record.circle" : "circle")
+                                .foregroundStyle(isSelected ? Color.brand : .primary)
+                            
+                            Text(option)
+                        }
+                        .padding(.vertical, 4)
+                    }
                 }
+                .buttonStyle(.plain)
+ 
+                Button(action: submit) {
+                    Text("Continue")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.glassProminent)
+                .tint(Color.brand)
+                .padding(.top, 6)
+                .disabled(!canSubmit)
             }
             .disabled(chatResponder == nil)
+            .padding()
+            .background(.quinary, in: .rect(cornerRadius: 12))
+            
         }
     }
 }

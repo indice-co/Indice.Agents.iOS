@@ -49,7 +49,8 @@ struct ChatListView: View {
             }
         }
         .listStyle(.plain)
-        .observeState(on: state)
+        .propagateErrors(state.errors)
+        .propagateLoadingState(state.isLoading && state.chatSections.isEmpty)
         .refreshable { state.refreshChats(force: true) }
         .task {
             state.refreshChats(force: false) {

@@ -39,6 +39,14 @@
                         "contentType": "text/markdown"
                     },
                     {
+                        "value": "{\"prompt\":\"Want a hand finding something I do cover?\",\"confirmText\":\"Yes, what can you help with?\",\"cancelText\":\"No, thanks\"}",
+                        "contentType": "application/vnd.indice.confirm+json"
+                    },
+                    {
+                        "value": "{\"options\":[\"What can you tell me about policy?\",\"What can you tell me about faq?\",\"What can you tell me about identity?\",\"What can you tell me about purpose_of_agent?\",\"What can you tell me about faq_bank?\"]}",
+                        "contentType": "application/vnd.indice.multiple-choice+json"
+                    },
+                    {
                         "value": "{\"severity\":\"warning\",\"title\":\"Outside my knowledge base\",\"text\":\"I answer only from the internal documentation loaded into this assistant, so anything beyond it I have to turn down.\"}",
                         "contentType": "application/vnd.indice.callout+json"
                     },
@@ -60,14 +68,6 @@
                         "value": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwNEFBNkQiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj4NCiAgIDxwYXRoIGQ9Ik0yMCA2TDkgMTdsLTUtNSIvPg0KIDwvc3ZnPg==",
                         "contentType": "image/svg+xml",
                         "name": "I can also render a Checkmark SVG"
-                    },
-                    {
-                        "value": "{\"prompt\":\"Want a hand finding something I do cover?\",\"confirmText\":\"Yes, what can you help with?\",\"cancelText\":\"No, thanks\"}",
-                        "contentType": "application/vnd.indice.confirm+json"
-                    },
-                    {
-                        "value": "{\"options\":[\"What can you tell me about policy?\",\"What can you tell me about faq?\",\"What can you tell me about identity?\",\"What can you tell me about purpose_of_agent?\",\"What can you tell me about faq_bank?\"]}",
-                        "contentType": "application/vnd.indice.multiple-choice+json"
                     }
                 ]
             },
