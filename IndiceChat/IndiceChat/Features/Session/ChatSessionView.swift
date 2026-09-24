@@ -83,7 +83,7 @@ struct ChatSessionView: View {
                 
                 MessageBox(
                     message: $message,
-                    response: nil, // viewModel.messages.last?.value,
+                    usage: viewModel.metadata.usage,
                     isSending: viewModel.isSending,
                     canSend: canSendMessage,
                     send: {
@@ -94,6 +94,8 @@ struct ChatSessionView: View {
             }
             .padding()
         })
+        .navigationTitle(viewModel.metadata.title ?? String(localized: "New chat"))
+        .navigationBarTitleDisplayMode(.inline)
         .onDisappear {
             viewModel.stop()
             state.refreshChats(force: true)
@@ -106,7 +108,7 @@ struct ChatSessionView: View {
         @Binding var message: String
         @FocusState private var focus
         
-        let response: DexChatResponse?
+        let usage: DexChatUsage?
         
         let isSending: Bool
         let canSend  : Bool
@@ -134,9 +136,9 @@ struct ChatSessionView: View {
                 .onTapGesture { focus = true }
                 
                 HStack {
-                    if let usage = response?.usage, let maxLimit = usage.questionsLimitCount {
+                    if let usage, let maxLimit = usage.questionsLimitCount {
                         HStack(spacing: 2) {
-                            Text((usage.questionsUsedCount ?? 0).formatted())
+                            Text(usage.questionsUsedCount?.formatted() ?? "—")
                             Text("of")
                             Text(maxLimit.formatted())
                         }
@@ -152,9 +154,10 @@ struct ChatSessionView: View {
                         SendButton()
                     }
                 }
+                .padding(.leading, 8)
             }
             .padding(4)
-            .glassEffect(.clear.interactive(), in: .rect(cornerRadius: 16))
+            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
             
         }
         
@@ -219,7 +222,7 @@ extension EnvironmentValues {
     .safeAreaInset(edge: .bottom) {
         ChatSessionView.MessageBox(
             message: $message,
-            response: nil,
+            usage: .init(questionsUsedCount: 2, questionsLimitCount: 5),
             isSending: isSending,
             canSend: !message.isEmpty,
             send: { Task {

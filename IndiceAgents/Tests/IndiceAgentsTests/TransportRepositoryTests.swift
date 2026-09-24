@@ -104,12 +104,15 @@ struct TransportRepositoryTests {
         payloads += Array(repeating: #"{"type":"delta","value":"Γεια 👋 "}"#, count: count - 1)
         payloads.append(#"{"type":"done"}"#)
         let wire = Data(payloads.map { "data: \($0)\n\n" }.joined().utf8)
-        FixtureHTTP.state.configure { _ in .init(body: wire, keepOpen: true) }
+        FixtureHTTP.state.configure { request in
+            request.httpMethod == "GET" ? ConversationFixture.reply : .init(body: wire, keepOpen: true)
+        }
         let session = ChatSessionService(repository: makeRepository(), chatID: nil, streamUpdateInterval: interval)
         var snapshots: [[ChatSessionService.Message]] = []
         let token = session.messages.sink { snapshots.append($0) }
         defer { token.cancel() }
         try await session.sendStream(message: "Hello")
+        try await waitForMetadata(session, title: "Planning")
         #expect(session.messages.value.last?.text == String(repeating: chunk, count: count))
         #expect(session.messages.value.last?.delivery == .complete)
         #expect(await session.lastResponse?.text == String(repeating: chunk, count: count))
@@ -125,27 +128,36 @@ struct TransportRepositoryTests {
         let wire = Data(TurnFixture.payloads.prefix(9).map { "data: \($0)\n\n" }.joined().utf8)
         FixtureHTTP.state.configure { _ in .init(body: wire, keepOpen: true) }
         let session = ChatSessionService(repository: makeRepository(), chatID: nil, streamUpdateInterval: .seconds(60))
+        var metadata = ChatSessionMetadata()
+        let metadataToken = session.metadata.sink { metadata = $0 }
+        defer { metadataToken.cancel() }
         let task = Task { try await session.sendStream(message: "Hello") }
         defer { task.cancel() }
         try await eventually { await session.chatID == TurnFixture.id }
         // Let the short fixture drain while the presentation timer stays asleep.
         try await Task.sleep(for: .milliseconds(100))
         #expect(session.messages.value.count == 1)
+        #expect(metadata == ChatSessionMetadata(id: TurnFixture.id))
         task.cancel()
         await #expect(throws: CancellationError.self) { try await task.value }
         #expect(session.messages.value.last?.text == "Γεια 👋")
         #expect(session.messages.value.last?.delivery == .cancelled)
         #expect(await session.lastResponse == nil)
+        #expect(FixtureHTTP.state.requests.allSatisfy { $0.httpMethod == "POST" })
         try await eventually { FixtureHTTP.state.stopCount > 0 }
         let stoppedMessageID = session.messages.value.last?.id
 
-        FixtureHTTP.state.configure { _ in .init(body: TurnFixture.wire) }
+        FixtureHTTP.state.configure { request in
+            request.httpMethod == "GET" ? ConversationFixture.reply : .init(body: TurnFixture.wire)
+        }
         try await session.sendStream(message: "Continue")
+        try await waitForMetadata(session, title: "Planning")
         #expect(session.messages.value.count == 4)
         #expect(session.messages.value[1].id == stoppedMessageID)
         #expect(session.messages.value[1].delivery == .cancelled)
         #expect(session.messages.value.last?.delivery == .complete)
         #expect(session.streamState.value == .completed)
+        #expect(metadata.title == "Planning")
     }
 
     @MainActor @Test func servicePublishesPendingBatchDuringServerPause() async throws {
@@ -216,12 +228,15 @@ struct TransportRepositoryTests {
     }
 
     @MainActor @Test func servicePublishesStableProgressAndCommitsOnlyOnDone() async throws {
-        FixtureHTTP.state.configure { _ in .init(body: TurnFixture.wire, keepOpen: true, delayChunks: true) }
+        FixtureHTTP.state.configure { request in
+            request.httpMethod == "GET" ? ConversationFixture.reply : .init(body: TurnFixture.wire, keepOpen: true, delayChunks: true)
+        }
         let session = ChatSessionService(repository: makeRepository(), chatID: nil)
         var snapshots: [[ChatSessionService.Message]] = []
         let token = session.messages.sink { snapshots.append($0) }
         defer { token.cancel() }
         try await session.sendStream(message: "Hello")
+        try await waitForMetadata(session, title: "Planning")
         #expect(await session.chatID == TurnFixture.id)
         #expect(await session.lastResponse?.text == "Γεια 👋")
         let partials = snapshots.flatMap { $0.filter { $0.delivery == .streaming && !$0.text.isEmpty } }
@@ -264,6 +279,164 @@ struct TransportRepositoryTests {
         #expect(session.streamState.value == .cancelled)
         #expect(await session.lastResponse == nil)
         #expect(FixtureHTTP.state.requests.count == 1)
+    }
+
+    @MainActor @Test func loadingConversationPublishesMetadataWithoutAnotherRequest() async throws {
+        FixtureHTTP.state.configure { _ in ConversationFixture.reply }
+        let service = ChatService(repository: makeRepository())
+        let session = try await service.chat(id: TurnFixture.id)
+        var metadata = ChatSessionMetadata()
+        let token = session.metadata.sink { metadata = $0 }
+        defer { token.cancel() }
+
+        #expect(metadata.id == TurnFixture.id)
+        #expect(metadata.title == "Planning")
+        #expect(metadata.createdAt == Date(timeIntervalSince1970: 0))
+        #expect(metadata.lastActivityAt == Date(timeIntervalSince1970: 60))
+        #expect(metadata.messageCount == 20)
+        #expect(metadata.usage == DexChatUsage(inputTokenCount: 600, outputTokenCount: 300,
+            totalTokenCount: 900, questionsUsedCount: 4, questionsLimitCount: 10))
+        #expect(session.messages.value.map(\.text) == ["Saved history"])
+        #expect(FixtureHTTP.state.requests.count == 1)
+    }
+
+    @MainActor @Test(arguments: [false, true])
+    func newConversationPublishesIDThenServerMetadata(streaming: Bool) async throws {
+        FixtureHTTP.state.configure { request in
+            if request.httpMethod == "GET" { return ConversationFixture.reply }
+            return streaming ? .init(body: TurnFixture.wire) : .json(TurnFixture.rest)
+        }
+        let session = await ChatService(repository: makeRepository()).newChat()
+        var snapshots: [ChatSessionMetadata] = []
+        let token = session.metadata.sink { snapshots.append($0) }
+        defer { token.cancel() }
+
+        #expect(snapshots == [.init()])
+        if streaming { try await session.sendStream(message: "Hello") }
+        else { try await session.send(message: "Hello") }
+        try await waitForMetadata(session, title: "Planning")
+
+        #expect(snapshots.count == 3)
+        #expect(snapshots.dropFirst().first == .init(id: TurnFixture.id))
+        #expect(snapshots.last?.title == "Planning")
+        #expect(snapshots.last?.usage?.totalTokenCount == 900)
+        #expect(snapshots.last?.messageCount == 20)
+        #expect(await session.lastResponse?.usage?.totalTokenCount == 15)
+        #expect(session.messages.value.map(\.text) == ["Hello", "Γεια 👋"])
+        #expect(session.messages.value.last?.delivery == .complete)
+        let requests = FixtureHTTP.state.requests
+        #expect(requests.map(\.httpMethod) == ["POST", "GET"])
+        #expect(requests.last?.url?.path.lowercased() == "/api/my/chats/\(TurnFixture.id.uuidString.lowercased())")
+    }
+
+    @MainActor @Test(arguments: [false, true])
+    func eachCompletedTurnRefreshesMetadataAndPreservesLiveMessages(streaming: Bool) async throws {
+        FixtureHTTP.state.configure { _ in ConversationFixture.reply }
+        let session = try await ChatService(repository: makeRepository()).chat(id: TurnFixture.id)
+        var metadata = ChatSessionMetadata()
+        let token = session.metadata.sink { metadata = $0 }
+        defer { token.cancel() }
+
+        for turn in 1...2 {
+            let previous = session.messages.value
+            FixtureHTTP.state.configure { request in
+                if request.httpMethod == "GET" {
+                    // Omitted ID is valid; retain the session ID. Server counts
+                    // need not match the number of locally displayed messages.
+                    return .json("{\"title\":\"Turn \(turn)\",\"messageCount\":\(20 + turn),\"usage\":{\"totalTokenCount\":\(900 + turn)},\"messages\":[]}")
+                }
+                return streaming ? .init(body: TurnFixture.wire) : .json(TurnFixture.rest)
+            }
+            if streaming { try await session.sendStream(message: "Next") }
+            else { try await session.send(message: "Next") }
+            try await waitForMetadata(session, title: "Turn \(turn)")
+
+            #expect(metadata.id == TurnFixture.id)
+            #expect(metadata.title == "Turn \(turn)")
+            #expect(metadata.messageCount == 20 + turn)
+            #expect(metadata.usage?.totalTokenCount == Int64(900 + turn))
+            #expect(Array(session.messages.value.prefix(previous.count)) == previous)
+            #expect(session.messages.value.count == previous.count + 2)
+            #expect(FixtureHTTP.state.requests.map(\.httpMethod) == ["POST", "GET"])
+        }
+    }
+
+    @MainActor @Test(arguments: [false, true], ["http", "decode", "wrongConversation"])
+    func failedMetadataRefreshRetainsValuesAndSuccessfulReply(streaming: Bool, failure: String) async throws {
+        FixtureHTTP.state.configure { _ in ConversationFixture.reply }
+        let session = try await ChatService(repository: makeRepository()).chat(id: TurnFixture.id)
+        var metadata = ChatSessionMetadata()
+        var snapshots: [ChatSessionMetadata] = []
+        let token = session.metadata.sink { metadata = $0; snapshots.append($0) }
+        defer { token.cancel() }
+        let previous = metadata
+        FixtureHTTP.state.configure { request in
+            if request.httpMethod != "GET" {
+                return streaming ? .init(body: TurnFixture.wire) : .json(TurnFixture.rest)
+            }
+            if FixtureHTTP.state.requests.filter({ $0.httpMethod == "GET" }).count > 1 {
+                return .json(#"{"title":"Updated","messageCount":24}"#)
+            }
+            switch failure {
+            case "http": return .init(status: 503, contentType: "application/json", body: Data())
+            case "decode": return .json("{broken")
+            default: return .json("{\"id\":\"\(UUID())\",\"title\":\"Wrong chat\"}")
+            }
+        }
+        if streaming { try await session.sendStream(message: "Hello") }
+        else { try await session.send(message: "Hello") }
+
+        #expect(metadata == previous)
+        #expect(session.messages.value.last?.text == "Γεια 👋")
+        #expect(session.messages.value.last?.delivery == .complete)
+        #expect(await session.lastResponse?.text == "Γεια 👋")
+        if streaming { #expect(session.streamState.value == .completed) }
+        try await eventually { FixtureHTTP.state.requests.contains { $0.httpMethod == "GET" } }
+        if streaming { try await session.sendStream(message: "Continue") }
+        else { try await session.send(message: "Continue") }
+        try await waitForMetadata(session, title: "Updated")
+        #expect(snapshots.count == 2)
+        #expect(snapshots.first == previous)
+        #expect(snapshots.last?.title == "Updated")
+    }
+
+    @MainActor @Test(arguments: [false, true])
+    func slowMetadataRefreshAllowsNextTurnAndDiscardsStaleResult(streaming: Bool) async throws {
+        let gate = ReplyGate()
+        defer { Task { await gate.open() } }
+        FixtureHTTP.state.configure { request in
+            if request.httpMethod == "GET" {
+                if FixtureHTTP.state.requests.filter({ $0.httpMethod == "GET" }).count == 1 {
+                    var reply = FixtureHTTP.Reply.json(#"{"title":"Stale","messageCount":2}"#)
+                    reply.gate = gate
+                    return reply
+                }
+                return ConversationFixture.reply
+            }
+            return streaming ? .init(body: TurnFixture.wire, keepOpen: true) : .json(TurnFixture.rest)
+        }
+        let session = await ChatService(repository: makeRepository()).newChat()
+        var snapshots: [ChatSessionMetadata] = []
+        let token = session.metadata.sink { snapshots.append($0) }
+        defer { token.cancel() }
+        if streaming { try await session.sendStream(message: "Hello") }
+        else { try await session.send(message: "Hello") }
+        try await eventually { FixtureHTTP.state.requests.contains { $0.httpMethod == "GET" } }
+        #expect(session.messages.value.last?.delivery == .complete)
+        if streaming {
+            #expect(session.streamState.value == .completed)
+            try await eventually { FixtureHTTP.state.stopCount > 0 }
+        }
+        if streaming { try await session.sendStream(message: "Continue") }
+        else { try await session.send(message: "Continue") }
+        #expect(FixtureHTTP.state.requests.filter { $0.httpMethod == "GET" }.count == 1)
+        #expect(snapshots.last == .init(id: TurnFixture.id))
+        await gate.open()
+        try await waitForMetadata(session, title: "Planning")
+        #expect(!snapshots.contains { $0.title == "Stale" })
+        #expect(FixtureHTTP.state.requests.filter { $0.httpMethod == "GET" }.count == 2)
+        #expect(session.messages.value.count == 4)
+        #expect(session.messages.value.allSatisfy { $0.delivery == .complete })
     }
 
     @Test func restRepositoriesUseCorrectPathsAndBodies() async throws {
@@ -355,6 +528,40 @@ struct TransportRepositoryTests {
     }
 }
 
+@MainActor
+private func waitForMetadata(_ session: ChatSessionService, title: String) async throws {
+    var current: ChatSessionMetadata?
+    let token = session.metadata.sink { current = $0 }
+    defer { token.cancel() }
+    try await eventually { await MainActor.run { current?.title == title } }
+}
+
+private actor ReplyGate {
+    private var isOpen = false
+    private var waiter: CheckedContinuation<Void, Never>?
+
+    func wait() async {
+        guard !isOpen else { return }
+        await withCheckedContinuation { waiter = $0 }
+    }
+
+    func open() {
+        isOpen = true
+        waiter?.resume()
+        waiter = nil
+    }
+}
+
+private enum ConversationFixture {
+    static let reply = FixtureHTTP.Reply.json("""
+        {"id":"\(TurnFixture.id)","title":"Planning","createdAt":"1970-01-01T00:00:00Z",
+        "lastActivityAt":"1970-01-01T00:01:00Z","messageCount":20,
+        "usage":{"inputTokenCount":600,"outputTokenCount":300,"totalTokenCount":900,
+        "questionsUsedCount":4,"questionsLimitCount":10},
+        "messages":[{"role":"assistant","content":{"parts":[{"value":"Saved history","contentType":"text/plain"}]}}]}
+        """)
+}
+
 private func eventually(_ predicate: @escaping @Sendable () async -> Bool) async throws {
     for _ in 0..<400 {
         if await predicate() { return }
@@ -382,6 +589,7 @@ private final class FixtureHTTP: URLProtocol, @unchecked Sendable {
         var body: Data
         var keepOpen = false
         var delayChunks = false
+        var gate: ReplyGate?
         static func json(_ string: String) -> Reply { .init(contentType: "application/json", body: Data(string.utf8)) }
     }
     final class State: @unchecked Sendable {
@@ -425,6 +633,7 @@ private final class FixtureHTTP: URLProtocol, @unchecked Sendable {
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         lock.withLock {
             operation = Task { @Sendable [self, reply] in
+                if let gate = reply.gate { await gate.wait() }
                 // Small chunks deliberately split UTF-8 sequences and SSE lines.
                 for offset in stride(from: 0, to: reply.body.count, by: 13) {
                     if Task.isCancelled { return }

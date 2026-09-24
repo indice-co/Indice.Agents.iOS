@@ -95,12 +95,31 @@ enum Dex {
     struct ImageAndName: View {
         
         enum Orientation {
-            case vertical
-            case horizontal
+            case vertical  (positioning: Positioning = .iconName)
+            case horizontal(positioning: Positioning = .iconName)
+
+            static let vertical  : Self = .vertical  (positioning: .iconName)
+            static let horizontal: Self = .horizontal(positioning: .iconName)
+            
+            fileprivate var positioning: Positioning {
+                switch self {
+                case .horizontal(let positioning): positioning
+                case .vertical  (let positioning): positioning
+                }
+            }
+            
+            enum Positioning {
+                case nameIcon
+                case iconName
+            }
         }
         
         private let orientation: Orientation
         private let size: Size
+        
+        private var positioning: Orientation.Positioning {
+            orientation.positioning
+        }
         
         init(_ orientation: Orientation = .horizontal, size: Size = .medium) {
             self.orientation = orientation
@@ -114,12 +133,23 @@ enum Dex {
             }
         }
         
-        var body: some View {
-            layout {
+        @ViewBuilder
+        private func Content() -> some View {
+            switch positioning {
+            case .nameIcon:
+                Dex.Name (size: size)
+                Dex.Image(size: size)
+            case .iconName:
                 Dex.Image(size: size)
                 Dex.Name (size: size)
             }
-            .fixedSize(horizontal: true, vertical: false)
+        }
+        
+        var body: some View {
+            layout { Content() }
+                .fixedSize(
+                    horizontal: true,
+                    vertical: false)
         }
     }
     

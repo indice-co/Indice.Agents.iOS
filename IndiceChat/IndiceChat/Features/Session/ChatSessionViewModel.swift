@@ -20,7 +20,7 @@ final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {
     @Published private(set) var streamError: String?
     @Published var talkingToMySelf = false
 
-    @Published private(set) var title: String?
+    @Published private(set) var metadata = ChatSessionMetadata()
     
     private var chat: ChatSessionService?
     private let service: ChatService
@@ -49,6 +49,10 @@ final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {
         
         chat.messages
             .sink { [weak self] in self?.messages = $0 }
+            .store(in: &subscriptions)
+
+        chat.metadata
+            .sink { [weak self] in self?.metadata = $0 }
             .store(in: &subscriptions)
         
         chat.streamState
@@ -102,5 +106,4 @@ final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {
     
     deinit { sendTask?.cancel() }
 }
-
 

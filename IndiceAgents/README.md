@@ -42,7 +42,7 @@ exclusive. An ingestion convenience method accepts a local markdown URL.
 
 ```swift
 let conversation = await agents.chatsService.newChat()
-// On MainActor, subscribe to conversation.messages and conversation.streamState.
+// On MainActor, subscribe to conversation.messages, .metadata and .streamState.
 // Subscribe before starting the task to see the first reply grow.
 let task = Task {
     try await conversation.sendStream(
@@ -54,6 +54,17 @@ let task = Task {
 
 Both new chats and follow-ups use the same session service. `send(request:)`
 provides the non-streaming alternative. `chat(id:)` loads existing history.
+It also seeds `metadata`, a read-only publisher of `ChatSessionMetadata` containing
+the conversation ID, title, dates, saved message count, and conversation usage.
+New chats publish empty metadata first and their ID as soon as it arrives.
+After each successful REST response or streamed `done`, the service fetches the
+conversation and updates metadata without replacing live messages or their IDs.
+Usage comes directly from the conversation, without adding per-response counters.
+Refresh failures retain the previous metadata and do not fail the completed send.
+Refreshes run in the background, so a slow request does not block the next message.
+One worker orders requests and coalesces refreshes when several turns complete
+during a pending fetch. Results from earlier turns are discarded after a new turn
+starts. Cancelling a reply does not mark already completed responses as cancelled.
 Messages have a stable local UUID for display and a separate optional server
 `messageId` string. The feedback endpoint requires a persisted UUID message ID;
 pass a UUID only when the server's message ID can be converted to one. `like: true`

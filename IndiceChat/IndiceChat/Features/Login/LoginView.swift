@@ -32,7 +32,7 @@ struct LoginView: View {
             Spacer()
             
             Dex
-                .ImageAndName(.vertical, size: .hero)
+                .ImageAndName(.vertical(positioning: .nameIcon), size: .hero)
                 .padding(.bottom)
             
             Text("Lets talk about it.")

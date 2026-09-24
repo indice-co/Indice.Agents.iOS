@@ -19,8 +19,9 @@ public actor ChatService {
 
     public func chat(id: UUID) async throws -> ChatSessionService {
         let conversation = try await repository.session(forChatId: id)
-        let service = ChatSessionService(repository: repository, chatID: id, history: conversation.messages ?? [])
+        let service = ChatSessionService(repository: repository, chatID: id, conversation: conversation)
         await service.publishHistory()
+        await service.publishMetadata()
         return service
     }
 
@@ -88,22 +89,40 @@ public actor ChatSessionService {
 
     @MainActor public let messages = CurrentValueSubject<[Message], Never>([])
     @MainActor public let streamState = CurrentValueSubject<StreamState, Never>(.idle)
+    @MainActor private let metadataSubject = CurrentValueSubject<ChatSessionMetadata, Never>(.init())
+
+    /// Replays the latest metadata and publishes updates on MainActor.
+    @MainActor public var metadata: AnyPublisher<ChatSessionMetadata, Never> {
+        metadataSubject.eraseToAnyPublisher()
+    }
+
     public private(set) var chatID: UUID?
     public private(set) var lastResponse: DexChatResponse?
 
     private let repository: ChatRepository
     private var history: [Message]
+    private var metadataValue: ChatSessionMetadata
+    private var metadataRevision = UUID()
+    private var pendingMetadataRevision: UUID?
+    private var metadataRefreshTask: Task<Void, Never>?
     private var isSending = false
     private var responseIDs: [UUID] = []
     private let streamUpdateInterval: Duration
 
-    init(repository: ChatRepository, chatID: UUID?, history: [DexChatMessage] = [],
+    init(repository: ChatRepository, chatID: UUID?, conversation: DexConversation? = nil,
          streamUpdateInterval: Duration = .milliseconds(75)) {
         self.repository = repository
         self.chatID = chatID
-        self.history = history.map { Message(value: $0) }
+        self.history = (conversation?.messages ?? []).map { Message(value: $0) }
+        if let conversation, let chatID {
+            self.metadataValue = .init(conversation: conversation, chatID: chatID)
+        } else {
+            self.metadataValue = .init(id: chatID)
+        }
         self.streamUpdateInterval = streamUpdateInterval
     }
+
+    deinit { metadataRefreshTask?.cancel() }
 
     public func send(message: String) async throws { try await send(request: .init(text: message)) }
 
@@ -127,10 +146,11 @@ public actor ChatSessionService {
             throw AgentsError.invalidStream("Unexpected conversation ID.")
         }
         
-        chatID = id
+        await identifyConversation(id)
         lastResponse = response
         
         await present(response, delivery: .complete)
+        refreshMetadata()
     }
 
     public func sendStream(message: String) async throws { try await sendStream(request: .init(text: message)) }
@@ -187,6 +207,8 @@ public actor ChatSessionService {
             }
             throw error
         }
+        // The stream has been closed and the reply committed before this request.
+        refreshMetadata()
     }
 
     private func receive(_ stream: MessageStream, into accumulator: ChatStreamAccumulator) async throws -> DexChatResponse {
@@ -197,7 +219,7 @@ public actor ChatSessionService {
                 if let chatID, chatID != id {
                     throw AgentsError.invalidStream("Unexpected conversation ID.")
                 }
-                chatID = id
+                await identifyConversation(id)
             case .completed(let response): return response
             default: break
             }
@@ -237,6 +259,7 @@ public actor ChatSessionService {
             throw AgentsError.invalidRequest("A message cannot be empty.")
         }
         isSending = true // Set before any await; actors are reentrant at suspension points.
+        metadataRevision = UUID()
         responseIDs = []
         history.append(.init(value: .init(authorName: request.authorName, role: .user,
                                           content: .init(parts: [.init(value: text, contentType: "text/markdown")]))))
@@ -277,6 +300,51 @@ public actor ChatSessionService {
     fileprivate func publishHistory() async {
         let snapshot = history
         await MainActor.run { messages.send(snapshot) }
+    }
+
+    private func identifyConversation(_ id: UUID) async {
+        guard chatID == nil else { return }
+        chatID = id
+        metadataValue = .init(id: id)
+        await publishMetadata()
+    }
+
+    private func refreshMetadata() {
+        pendingMetadataRevision = metadataRevision
+        guard metadataRefreshTask == nil else { return }
+        // One worker orders requests and coalesces completed turns while a fetch
+        // is pending. It does not hold the send guard or retain the session while
+        // waiting on NetworkClient, which does not propagate caller cancellation.
+        metadataRefreshTask = Task { [weak self, repository] in
+            while !Task.isCancelled, let request = await self?.nextMetadataRefresh() {
+                if let conversation = try? await repository.session(forChatId: request.chatID), !Task.isCancelled {
+                    await self?.applyMetadata(conversation, chatID: request.chatID, revision: request.revision)
+                }
+                // Failures leave the last known metadata and completed reply
+                // intact. A later completed turn requests another refresh.
+            }
+        }
+    }
+
+    private func nextMetadataRefresh() -> (chatID: UUID, revision: UUID)? {
+        guard let revision = pendingMetadataRevision, let chatID else {
+            metadataRefreshTask = nil
+            return nil
+        }
+        pendingMetadataRevision = nil
+        return (chatID, revision)
+    }
+
+    private func applyMetadata(_ conversation: DexConversation, chatID: UUID, revision: UUID) async {
+        guard revision == metadataRevision,
+              conversation.id == nil || conversation.id == chatID else { return }
+        metadataValue = .init(conversation: conversation, chatID: chatID)
+        await publishMetadata()
+    }
+
+    fileprivate func publishMetadata() async {
+        let snapshot = metadataValue
+        await MainActor.run { metadataSubject.send(snapshot) }
     }
 
     private func publishState(_ state: StreamState) async {

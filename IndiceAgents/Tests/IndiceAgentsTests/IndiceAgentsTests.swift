@@ -178,8 +178,12 @@ enum TurnFixture {
 
 @Test func ingestionScopeIsOptIn() throws {
     let pkce = PKCE.generateData().pkce
-    let regular = AgentsClient().createLoginURL(for: pkce)
-    let ingestion = AgentsClient(requestIngestionScope: true).createLoginURL(for: pkce)
+    let configuration = AgentsClient.Configuration(
+        authURL: URL(string: "https://identity-fixture.test")!,
+        agentsURL: URL(string: "https://agents-fixture.test")!,
+        clientID: "fixture-client", clientSecret: nil)
+    let regular = AgentsClient(configuration: configuration).createLoginURL(for: pkce)
+    let ingestion = AgentsClient(requestIngestionScope: true, configuration: configuration).createLoginURL(for: pkce)
     func scopes(_ url: URL) -> [Substring] {
         (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "scope" }?.value ?? "").split(separator: " ")
     }
