@@ -1,0 +1,13 @@
+//
+//  example.xcconfig
+//  IndiceChat
+//
+//  Created by Nikolas Konstantakopoulos on 24/9/26.
+//
+
+// Configuration settings file format documentation can be found at:
+// https://developer.apple.com/documentation/xcode/adding-a-build-configuration-file-to-your-project
+
+
+CLIENT_ID=your_client_id
+CLIENT_SECRET=your_client_secret
