@@ -5,20 +5,17 @@ import PackageDescription
 
 let package = Package(
     name: "IndiceAgents",
-    platforms: [.iOS(.v16), .macOS(.v13)],
+    platforms: [.iOS(.v15), .macOS(.v12)],
     products: [
         .library(
             name: "AgentsModels",
-            targets: ["AgentsModels"]
-        ),
+            targets: ["AgentsModels"]),
         .library(
             name: "IndiceAgents",
-            targets: ["IndiceAgents"]
-        ),
+            targets: ["IndiceAgents"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/indice-co/Indice.Swift.Networking", .upToNextMajor(from: "1.5.2")),
-        .package(url: "https://github.com/indice-co/Indice.Identity.iOS", .upToNextMinor(from: "1.3.2")),
+        .package(name: "Indice.Swift.Networking", path: "../../Networking.iOS"),
     ],
     targets: [
         .target(
@@ -31,9 +28,7 @@ let package = Package(
             name: "IndiceAgents",
             dependencies: [
                 "AgentsModels",
-                .product(name: "NetworkClient",    package: "Indice.Swift.Networking"),
                 .product(name: "NetworkUtilities", package: "Indice.Swift.Networking"),
-                .product(name: "IdentityClient",   package: "Indice.Identity.iOS"),
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),

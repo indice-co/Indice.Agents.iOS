@@ -50,7 +50,7 @@ struct ChatListView: View {
         }
         .listStyle(.plain)
         .propagateErrors(state.errors)
-        .propagateLoadingState(state.isLoading && state.chatSections.isEmpty)
+        // .propagateLoadingState(state.isLoading && state.chatSections.isEmpty)
         .refreshable { state.refreshChats(force: true) }
         .task {
             state.refreshChats(force: false) {

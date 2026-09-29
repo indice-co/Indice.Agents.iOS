@@ -1,10 +1,9 @@
 import Foundation
 import AgentsModels
-import NetworkClient
 
 internal struct AgentsRepository: Sendable {
     let endpoint: URL
-    let client: NetworkClient
+    let client: AgentsClient.NetworkProcessor
 
     func agents() async throws -> [AgentInfo] {
         try await client.fetch(request: .builder()

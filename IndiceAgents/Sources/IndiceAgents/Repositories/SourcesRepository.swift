@@ -1,5 +1,5 @@
 import Foundation
-import NetworkClient
+import NetworkUtilities
 
 /// Binary response plus HTTP metadata, not a JSON API model.
 public struct SourceResource: Sendable {
@@ -11,7 +11,7 @@ public struct SourceResource: Sendable {
 
 internal struct SourcesRepository: Sendable {
     let endpoint: URL
-    let client: NetworkClient
+    let client: AgentsClient.NetworkProcessor
 
     func source(path: String, download: Bool = false) async throws -> SourceResource {
         // This endpoint has a catch-all path: preserve directory separators while
@@ -19,9 +19,13 @@ internal struct SourcesRepository: Sendable {
         guard !path.isEmpty, !path.split(separator: "/").contains(where: { $0 == "." || $0 == ".." }) else {
             throw AgentsError.invalidRequest("Invalid source path.")
         }
-        let url = path.split(separator: "/").reduce(endpoint.appendingPathComponent("api/sources")) {
-            $0.appendingPathComponent(String($1))
-        }
+        
+        let url = path
+            .split(separator: "/")
+            .reduce(
+                endpoint.appendingPathComponent("api/sources"),
+                { $0.appendingPathComponent(String($1)) })
+        
         return try await resource(request: .builder()
             .get(url: url)
             .add(query: "download", value: String(download))
@@ -42,8 +46,11 @@ internal struct SourcesRepository: Sendable {
     }
 
     private func resource(request: URLRequest) async throws -> SourceResource {
-        let result: NetworkClient.Response<Data> = try await client.fetch(request: request)
-        return .init(data: result.item, contentType: result.value(forHeaderKey: "Content-Type"),
-                     suggestedFileName: result.httpResponse.suggestedFilename, url: result.httpResponse.url)
+        let result = try await client.fetch(Data.self, request: request)
+        
+        return .init(
+            data: result.item,
+            contentType: result.value(forHeaderKey: "Content-Type"),
+            suggestedFileName: result.httpResponse.suggestedFilename, url: result.httpResponse.url)
     }
 }

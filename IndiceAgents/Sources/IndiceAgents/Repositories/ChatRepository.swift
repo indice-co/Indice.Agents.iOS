@@ -1,11 +1,9 @@
 import Foundation
-import NetworkClient
 import AgentsModels
 
 internal struct ChatRepository: Sendable {
     let endpoint: URL
-    let client: NetworkClient
-    let streamAuthorization: StreamAuthorization
+    let client: AgentsClient.NetworkProcessor
 
     func create(chatRequest: ChatRequest) async throws -> DexChatResponse {
         try await client.fetch(request: .builder()
@@ -48,7 +46,7 @@ internal struct ChatRepository: Sendable {
             .build()).item
     }
 
-    func like(chatID: UUID, messageID: UUID, request: LikeRequest) async throws {
+    func like(chatID: UUID, messageID: DexChatMessage.ID, request: LikeRequest) async throws {
         try await client.fetch(request: .builder()
             .put(url: endpoint.appendingPathComponent("api/my/chats/\(chatID)/messages/\(messageID)/like"))
             .bodyJson(of: request)
@@ -63,14 +61,9 @@ internal struct ChatRepository: Sendable {
     }
 
     private func openStream(request: URLRequest) async throws -> MessageStream {
-        let authorized = try await streamAuthorization.authorize(request)
-        do {
-            return try await client.openSSEStream(DexChatResponseUpdate.self, request: authorized, decoder: APIJSON.decoder)
-        } catch SSEError.http(let status, _) where status == 401 {
-            // Only the HTTP handshake is retried, exactly once. Errors produced
-            // by an established stream escape through its iterator, never here.
-            let refreshed = try await streamAuthorization.authorize(request, rejectedHeader: authorized.value(forHTTPHeaderField: "Authorization"))
-            return try await client.openSSEStream(DexChatResponseUpdate.self, request: refreshed, decoder: APIJSON.decoder)
-        }
+        try await client
+            .openSSEStream(DexChatResponseUpdate.self, request: request)
+            .item
+        // try await client.openSSEStream(DexChatResponseUpdate.self, request: authorized, decoder: APIJSON.decoder)
     }
 }

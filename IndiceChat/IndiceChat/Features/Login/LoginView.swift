@@ -79,6 +79,7 @@ struct LoginView: View {
         .fullScreenCover(item: $state.loginData, content: { data in
             SafariView(url: data.url)
         })
+        .observeState(on: state)
         .onOpenURL(perform: handleCallbackURL(_:))
         .navigationDestination(
             item: $loginState,

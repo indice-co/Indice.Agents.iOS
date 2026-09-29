@@ -7,12 +7,11 @@
 
 import Foundation
 import AgentsModels
-import NetworkClient
 
 internal struct ProfileRepository: Sendable {
     
     let endpoint: URL
-    let client: NetworkClient
+    let client: AgentsClient.NetworkProcessor
     
     func profile() async throws -> Profile {
         try await client.fetch(request: .builder()

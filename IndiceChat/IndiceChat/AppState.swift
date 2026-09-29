@@ -28,15 +28,9 @@ final class AppState: ViewModel {
         var list: [ConversationListItem]
     }
     
-    private let api = AgentsClient(
-        configuration: .init(
-            authURL: URL(string: "https://my.indice.gr")!,
-            agentsURL: URL(string: "https://agents.indice.gr")!,
-            clientID: Bundle.clientId,
-            clientSecret: Bundle.clientSecret)
-    )
-    
-    var chatService: ChatService { api.chatsService }
+    private let client = ChatClient()
+        
+    var chatService: ChatService { client.agents.chatsService }
     
     @Published
     var loginData: LoginData?
@@ -47,12 +41,15 @@ final class AppState: ViewModel {
     
     
     var canQuickLogin: Bool {
-        api.canQuickLogin
+        client.tokens.refreshToken != nil
     }
     
     func tryRefreshLogin(_ onSuccess: @escaping () -> Void) {
         loadAsync {
-            try await $0.api.refreshLogin()
+            try await $0.client
+                .identity
+                .authService
+                .refreshTokens()
         } onSuccess: {
             onSuccess()
         }
@@ -65,7 +62,7 @@ final class AppState: ViewModel {
     func initializeLogin() {
         let pkceData = PKCE.generateData()
         let verifier = pkceData.verifier
-        let url = api.createLoginURL(for: pkceData.pkce)
+        let url = client.createLoginURL(for: pkceData.pkce)
         
         self.loginData = .init(url: url, verifier: verifier, pkce: pkceData.pkce)
     }
@@ -79,7 +76,7 @@ final class AppState: ViewModel {
         loginData = nil
         
         loadAsync {
-            try await $0.api.login(
+            try await $0.client.login(
                 code: code,
                 verifier: data.verifier)
         } onSuccess: {
@@ -92,7 +89,7 @@ final class AppState: ViewModel {
         guard force || chatSections.isEmpty else { return }
         
         loadAsync {
-            try await $0.api.chatsService.chats()
+            try await $0.client.agents.chatsService.chats()
         } onSuccess: { [weak self] result in
             self?.chatSections = (result.items ?? []).sections()
             onSuccess?()
@@ -101,7 +98,7 @@ final class AppState: ViewModel {
     
     func delete(chatID: UUID) {
         loadAsync {
-            try await $0.api
+            try await $0.client.agents
                 .chatsService
                 .delete(chatID: chatID)
             

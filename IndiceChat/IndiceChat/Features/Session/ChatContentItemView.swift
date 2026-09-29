@@ -389,7 +389,7 @@ struct Showcase: View {
         ScrollView {
             LazyVStack {
                 ForEach(model.items) { item in
-                    MessageItemView(message: item)
+                    MessageItemView(message: item, canUseResponderForChoices: true)
                 }
             }
             .padding()

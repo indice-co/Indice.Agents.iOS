@@ -1,10 +1,9 @@
 import Foundation
 import AgentsModels
-import NetworkClient
 
 internal struct DocumentsRepository: Sendable {
     let endpoint: URL
-    let client: NetworkClient
+    let client: AgentsClient.NetworkProcessor
 
     func ingest(request model: DocumentIngestRequest) async throws -> IngestionReport {
         guard let file = model.markdownSourceFile, file.fileURL.isFileURL else {

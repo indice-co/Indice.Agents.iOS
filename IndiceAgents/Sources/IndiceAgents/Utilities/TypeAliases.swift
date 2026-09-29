@@ -1,3 +1,4 @@
 import AgentsModels
+import NetworkUtilities
 
-public typealias MessageStream = ServerSentEventStream<DexChatResponseUpdate>
+public typealias MessageStream = StreamHandle<ServerSentEvent<DexChatResponseUpdate>>

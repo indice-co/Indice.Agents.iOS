@@ -3,17 +3,23 @@ import AgentsModels
 import Combine
 
 public actor ChatService {
+    
     private let repository: ChatRepository
 
     init(repository: ChatRepository) { self.repository = repository }
 
-    public func chats(paging: PagingOptions = .init(page: 1, size: 100), filter: FilterOptions? = nil) async throws -> ConversationListItemResultSet {
+    public func chats(
+        paging: PagingOptions = .init(page: 1, size: 100),
+        filter: FilterOptions? = nil
+    ) async throws -> ConversationListItemResultSet {
         try await repository.chats(paging: paging, filter: filter)
     }
 
-    public func delete(chatID: UUID) async throws { try await repository.delete(chatId: chatID) }
+    public func delete(chatID: UUID) async throws {
+        try await repository.delete(chatId: chatID)
+    }
 
-    public func like(chatID: UUID, messageID: UUID, like: Bool?) async throws {
+    public func like(chatID: UUID, messageID: DexChatMessage.ID, like: Bool?) async throws {
         try await repository.like(chatID: chatID, messageID: messageID, request: .init(like: like))
     }
 
@@ -107,24 +113,32 @@ public actor ChatSessionService {
     private var metadataRefreshTask: Task<Void, Never>?
     private var isSending = false
     private var responseIDs: [UUID] = []
-    private let streamUpdateInterval: Duration
+    private let streamUpdateTimeInterval: TimeInterval
 
-    init(repository: ChatRepository, chatID: UUID?, conversation: DexConversation? = nil,
-         streamUpdateInterval: Duration = .milliseconds(75)) {
+    init(
+        repository: ChatRepository,
+        chatID: UUID?,
+        conversation: DexConversation? = nil,
+        streamUpdateInterval: TimeInterval = 0.050 /* 50 milliseconds */
+    ) {
         self.repository = repository
         self.chatID = chatID
         self.history = (conversation?.messages ?? []).map { Message(value: $0) }
+        
         if let conversation, let chatID {
             self.metadataValue = .init(conversation: conversation, chatID: chatID)
         } else {
             self.metadataValue = .init(id: chatID)
         }
-        self.streamUpdateInterval = streamUpdateInterval
+        
+        self.streamUpdateTimeInterval = streamUpdateInterval
     }
 
     deinit { metadataRefreshTask?.cancel() }
 
-    public func send(message: String) async throws { try await send(request: .init(text: message)) }
+    public func send(message: String) async throws {
+        try await send(request: .init(text: message))
+    }
 
     public func send(request: ChatRequest) async throws {
         try beginTurn(request)
@@ -153,16 +167,22 @@ public actor ChatSessionService {
         refreshMetadata()
     }
 
-    public func sendStream(message: String) async throws { try await sendStream(request: .init(text: message)) }
+    public func sendStream(message: String) async throws {
+        try await sendStream(request: .init(text: message))
+    }
 
     /// Suspends until `done` or failure. Observe messages/streamState for progress.
     /// Cancel the calling Task to stop both the consumer and its URLSession task.
     public func sendStream(request: ChatRequest) async throws {
         try beginTurn(request)
+        
         defer { isSending = false }
+        
         await publishHistory()
         await publishState(.receiving(status: nil))
+        
         let accumulator = ChatStreamAccumulator()
+        
         do {
             let stream: MessageStream
             if let chatID {
@@ -188,12 +208,14 @@ public actor ChatSessionService {
             lastResponse = response
             await present(response, delivery: .complete)
             await publishState(.completed)
+            
         } catch {
             if Task.isCancelled || error is CancellationError {
                 await finishPartial(from: accumulator, delivery: .cancelled)
                 await publishState(.cancelled)
                 throw CancellationError()
             }
+            
             if case AgentsError.streamFailed = error {
                 // An API error frame means the answer was abandoned server-side.
                 history.removeAll { responseIDs.contains($0.id) }
@@ -205,12 +227,36 @@ public actor ChatSessionService {
                 await finishPartial(from: accumulator, delivery: .interrupted)
                 await publishState(.interrupted(error.localizedDescription))
             }
+            
             throw error
         }
         // The stream has been closed and the reply committed before this request.
         refreshMetadata()
     }
 
+    public func score(_ score: MessageScore, messageID: DexChatMessage.ID) async throws {
+        guard let chatID = self.chatID else {
+            throw AgentsError.missingConversationID
+        }
+        
+        try await repository.like(
+            chatID: chatID,
+            messageID: messageID,
+            request: .init(like: score.isPositive))
+        
+        if let index = history.firstIndex(where: { $0.value.messageId == messageID }) {
+            history[index].value.liked = score.isPositive
+        }
+        
+        if let index = lastResponse?.messages?.firstIndex(where: { $0.messageId == messageID }) {
+            lastResponse?.messages?[index].liked = score.isPositive
+        }
+        
+        await publishHistory()
+    }
+    
+    // MARK: Operation implementations
+    
     private func receive(_ stream: MessageStream, into accumulator: ChatStreamAccumulator) async throws -> DexChatResponse {
         for try await event in stream {
             try Task.checkCancellation()
@@ -233,7 +279,7 @@ public actor ChatSessionService {
             // A timer, rather than a check on the next delta, also flushes the
             // last batch when the server pauses. There is only one publisher;
             // if the main actor is busy, newer changes remain in the accumulator.
-            try await Task.sleep(for: streamUpdateInterval)
+            try await Task.sleep(nanoseconds: UInt64(streamUpdateTimeInterval * 1_000_000_000))
             let snapshot = try await accumulator.snapshot()
             try Task.checkCancellation()
             if let response = snapshot.response { await present(response, delivery: .streaming) }
@@ -261,8 +307,11 @@ public actor ChatSessionService {
         isSending = true // Set before any await; actors are reentrant at suspension points.
         metadataRevision = UUID()
         responseIDs = []
-        history.append(.init(value: .init(authorName: request.authorName, role: .user,
-                                          content: .init(parts: [.init(value: text, contentType: "text/markdown")]))))
+        history.append(.init(value: .init(
+            messageId: UUID().uuidString,
+            authorName: request.authorName,
+            role: .user,
+            content: .init(parts: [.init(value: text, contentType: "text/markdown")]))))
     }
 
     private func present(_ response: DexChatResponse, delivery: Message.Delivery) async {
@@ -318,7 +367,10 @@ public actor ChatSessionService {
         metadataRefreshTask = Task { [weak self, repository] in
             while !Task.isCancelled, let request = await self?.nextMetadataRefresh() {
                 if let conversation = try? await repository.session(forChatId: request.chatID), !Task.isCancelled {
-                    await self?.applyMetadata(conversation, chatID: request.chatID, revision: request.revision)
+                    await self?.applyMetadata(
+                        conversation,
+                        chatID: request.chatID,
+                        revision: request.revision)
                 }
                 // Failures leave the last known metadata and completed reply
                 // intact. A later completed turn requests another refresh.

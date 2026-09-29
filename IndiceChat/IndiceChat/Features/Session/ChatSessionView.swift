@@ -43,9 +43,10 @@ struct ChatSessionView: View {
                     ForEach(viewModel.messages) { message in
                         let isLastMessage = message.id == viewModel.messages.last?.id
                         
-                        MessageItemView(message: message)
-                            .id(message.id)
-                            .environment(\.chatResponder, isLastMessage ? viewModel : nil)
+                        MessageItemView(
+                            message: message,
+                            canUseResponderForChoices: isLastMessage)
+                        .id(message.id)
                     }
                 }
                 .padding()
@@ -57,6 +58,7 @@ struct ChatSessionView: View {
                         .padding()
                 }
             }
+            .environment(\.chatResponder, viewModel)
             .background(content: {
                 if viewModel.messages.isEmpty, viewModel.isReady {
                     VStack {
@@ -194,11 +196,12 @@ struct ChatSessionView: View {
 
 protocol ChatSelectionResponder: AnyObject {
     func response(withMessage message: String)
+    func score(_ score: MessageScore, messageId: DexChatMessage.ID)
 }
 
 extension EnvironmentValues {
     @Entry
-    fileprivate(set)
+    // fileprivate(set)
     var chatResponder: ChatSelectionResponder?
 }
 

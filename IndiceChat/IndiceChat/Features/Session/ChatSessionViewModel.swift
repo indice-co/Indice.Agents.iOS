@@ -73,7 +73,10 @@ final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {
     func post(message: String) {
         guard isReady, !isSending else { return }
         if talkingToMySelf {
-            messages.append(.init(value: .init(role: .user, content: .init(parts: [.init(value: message, contentType: "text/plain")]))))
+            messages.append(.init(value: .init(
+                messageId: UUID().uuidString,
+                role: .user,
+                content: .init(parts: [.init(value: message, contentType: "text/plain")]))))
             return
         }
         isSending = true
@@ -87,8 +90,9 @@ final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {
             do {
                 // Subscribe before sending, so the first reply is progressive too.
                 let session: ChatSessionService
-                if let chat { session = chat }
-                else {
+                if let chat {
+                    session = chat
+                } else {
                     session = await service.newChat()
                     setup(chat: session)
                 }
@@ -103,6 +107,14 @@ final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {
     }
 
     func stop() { sendTask?.cancel() }
+    
+    func score(_ score: MessageScore, messageId: DexChatMessage.ID) {
+        loadAsync({
+            try await $0
+                .chat?
+                .score(score, messageID: messageId)
+        }, with: .init(loadSilently: true))
+    }
     
     deinit { sendTask?.cancel() }
 }
