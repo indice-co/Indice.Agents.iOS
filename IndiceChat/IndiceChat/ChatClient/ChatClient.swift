@@ -9,7 +9,7 @@ import Foundation
 import NetworkClient
 import NetworkStream
 import IdentityClient
-import IndiceAgents
+import AgentsClient
 
 
 final class ChatClient: @unchecked Sendable {

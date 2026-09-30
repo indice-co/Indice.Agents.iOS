@@ -1,14 +1,14 @@
-# IndiceAgents
+# Indice.Agents
 
 `AgentsModels` contains raw Codable/Sendable API values. Every API payload adopts
-`APIModel`. `IndiceAgents` contains internal repositories, the service actors, and
+`APIModel`. `AgentsClient` contains internal repositories, the service actors, and
 `AgentsClient`, the consumer entry point. Ordinary requests keep using Indice
 NetworkClient 1.5.2 and its URLRequest builder.
 
 ## Using the services
 
 ```swift
-import IndiceAgents
+import AgentsClient
 import AgentsModels
 
 let agents = AgentsClient()

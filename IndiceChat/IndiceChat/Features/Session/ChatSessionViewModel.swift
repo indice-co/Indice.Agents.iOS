@@ -9,7 +9,7 @@
 
 import Foundation
 import Combine
-import IndiceAgents
+import AgentsClient
 import AgentsModels
 
 final class ChatSessionViewModel: ViewModel, ChatSelectionResponder {

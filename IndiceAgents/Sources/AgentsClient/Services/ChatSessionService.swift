@@ -1,51 +1,18 @@
+//
+//  ChatSessionService.swift
+//  Indice.Agents
+//
+//  Created by Nikolas Konstantakopoulos on 30/9/26.
+//
+
 import Foundation
-import AgentsModels
 import Combine
-
-public actor ChatService {
-    
-    private let repository: ChatRepository
-
-    init(repository: ChatRepository) { self.repository = repository }
-
-    public func chats(
-        paging: PagingOptions = .init(page: 1, size: 100),
-        filter: FilterOptions? = nil
-    ) async throws -> ConversationListItemResultSet {
-        try await repository.chats(paging: paging, filter: filter)
-    }
-
-    public func delete(chatID: UUID) async throws {
-        try await repository.delete(chatId: chatID)
-    }
-
-    public func like(chatID: UUID, messageID: DexChatMessage.ID, like: Bool?) async throws {
-        try await repository.like(chatID: chatID, messageID: messageID, request: .init(like: like))
-    }
-
-    public func chat(id: UUID) async throws -> ChatSessionService {
-        let conversation = try await repository.session(forChatId: id)
-        let service = ChatSessionService(repository: repository, chatID: id, conversation: conversation)
-        await service.publishHistory()
-        await service.publishMetadata()
-        return service
-    }
-
-    /// Create a local session before sending. Its conversation ID arrives with
-    /// the first REST response or SSE start frame, allowing the first turn to stream.
-    public func newChat() -> ChatSessionService {
-        ChatSessionService(repository: repository, chatID: nil)
-    }
-
-    public func createNewChat(message: String) async throws -> ChatSessionService {
-        let service = newChat()
-        try await service.send(message: message)
-        return service
-    }
-}
+import AgentsModels
 
 public actor ChatSessionService {
+    
     public struct Message: Sendable, Identifiable, Equatable {
+        
         public enum Delivery: Sendable, Equatable {
             case complete
             case streaming
@@ -346,7 +313,7 @@ public actor ChatSessionService {
         await publishHistory()
     }
 
-    fileprivate func publishHistory() async {
+    func publishHistory() async {
         let snapshot = history
         await MainActor.run { messages.send(snapshot) }
     }
@@ -394,7 +361,7 @@ public actor ChatSessionService {
         await publishMetadata()
     }
 
-    fileprivate func publishMetadata() async {
+    func publishMetadata() async {
         let snapshot = metadataValue
         await MainActor.run { metadataSubject.send(snapshot) }
     }

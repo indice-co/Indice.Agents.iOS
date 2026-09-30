@@ -1,5 +1,11 @@
+//
+//  ChatSessionMetadata.swift
+//  Indice.Agents
+//
+//  Created by Nikolas Konstantakopoulos on 30/9/26.
+//
+
 import Foundation
-import AgentsModels
 
 /// Server metadata for the active conversation, separate from its live messages.
 /// Usage and message count describe the saved conversation, not local partial replies.
@@ -27,7 +33,7 @@ public struct ChatSessionMetadata: Sendable, Equatable {
         self.usage = usage
     }
 
-    init(conversation: DexConversation, chatID: UUID) {
+    public init(conversation: DexConversation, chatID: UUID) {
         self.init(
             id: chatID,
             title: conversation.title,

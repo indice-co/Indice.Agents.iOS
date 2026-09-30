@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import AgentsModels
-@testable import IndiceAgents
+@testable import AgentsClient
 
 struct ChatContentTests {
     private let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aE1sAAAAASUVORK5CYII="

@@ -1,6 +1,6 @@
 //
 //  CriticalSectionLock.swift
-//  IndiceAgents
+//  AgentsClient
 //
 //  Created by Nikolas Konstantakopoulos on 8/7/26.
 //

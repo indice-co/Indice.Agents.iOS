@@ -2,7 +2,7 @@ import Foundation
 import Testing
 import AgentsModels
 import IdentityClient
-@testable import IndiceAgents
+@testable import AgentsClient
 
 @Test func modelContract() throws {
     let json = #"{"conversationId":"9c205432-4b5b-4d44-a969-f1470206c973","messages":[{"messageId":"opaque-message-id","role":"assistant","content":{"parts":[{"value":"Γεια 👋","contentType":"text/markdown"}]},"citations":[{"score":"0.75","number":"1"}],"sources":[]}],"usage":{"totalTokenCount":"9223372036854775807"},"createdAt":"2026-09-23T09:00:00.1234567+03:00","finishReason":"stop","text":"Γεια 👋"}"#

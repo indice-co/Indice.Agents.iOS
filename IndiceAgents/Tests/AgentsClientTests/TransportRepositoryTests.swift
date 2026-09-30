@@ -3,7 +3,7 @@ import Combine
 import Testing
 import AgentsModels
 import NetworkClient
-@testable import IndiceAgents
+@testable import AgentsClient
 
 /// URLProtocol exercises the actual URLSession.shared byte transport without
 /// credentials, live backend mutations, or an external test-server dependency.

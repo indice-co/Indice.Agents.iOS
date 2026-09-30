@@ -1,6 +1,6 @@
 //
 //  AgentsClient.swift
-//  IndiceAgents
+//  AgentsClient
 //
 //  Created by Nikolas Konstantakopoulos on 7/7/26.
 //
@@ -12,7 +12,7 @@ import NetworkUtilities
 
 public final class AgentsClient: @unchecked Sendable {
     
-    public typealias NetworkProcessor = NetworkUtilities::RequestProcessor & StreamProcessor
+    public typealias NetworkProcessor = RequestProcessor & StreamProcessor
     
     public struct Configuration {
         let baseURL: URL

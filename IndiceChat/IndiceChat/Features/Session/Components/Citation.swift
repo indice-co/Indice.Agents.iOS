@@ -7,7 +7,7 @@
 
 import SwiftUI
 import Foundation
-import IndiceAgents
+import AgentsClient
 import AgentsModels
 
 struct CitationView: View {

@@ -25,7 +25,7 @@ internal struct ChatRepository: Sendable {
             .build()).item
     }
 
-    func chats(paging: PagingOptions, filter: FilterOptions?) async throws -> ConversationListItemResultSet {
+    func chats(paging: PagingOptions, filter: FilterOptions?) async throws -> ResultSet<ConversationListItem> {
         try await client.fetch(request: .builder()
             .get(url: endpoint.appendingPathComponent("api/my/chats"))
             .add(paging: paging)

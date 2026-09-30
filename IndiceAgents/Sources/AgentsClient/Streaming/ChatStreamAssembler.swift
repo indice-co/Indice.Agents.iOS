@@ -1,25 +1,7 @@
 import Foundation
 import AgentsModels
 
-public enum AgentsError: Error, LocalizedError, Sendable {
-    case notSignedIn
-    case invalidRequest(String)
-    case invalidStream(String)
-    case streamFailed(String)
-    case incompleteStream
-    case turnInProgress
-    case missingConversationID
 
-    public var errorDescription: String? {
-        switch self {
-        case .notSignedIn: "Sign in before using the Agents API."
-        case .invalidRequest(let reason), .invalidStream(let reason), .streamFailed(let reason): reason
-        case .incompleteStream: "The connection ended before the reply was complete."
-        case .turnInProgress: "Wait for the current reply or stop it before sending another message."
-        case .missingConversationID: "The server did not supply a conversation ID."
-        }
-    }
-}
 
 /// Chat protocol only. This is deliberately independent of SSE and NetworkClient:
 /// the same ordered JSON patches could arrive over another transport in future.

@@ -8,7 +8,7 @@
 
 import Foundation
 
-extension Date {
+nonisolated extension Date {
     // Just a more "context"-ed value wrapper.
     static var timestamp: TimeInterval {
         Date.timeIntervalSinceReferenceDate
@@ -64,7 +64,7 @@ extension Date {
 }
 
 
-struct Month {
+struct Month: Sendable {
     var name: String
     var shortName: String
     var index: Int
@@ -74,7 +74,7 @@ struct Month {
 
 
 
-func dateIntervalForMonthIndex(_ monthIndex: Int, in year: Int, calendar: Calendar = .current) -> DateInterval? {
+nonisolated func dateIntervalForMonthIndex(_ monthIndex: Int, in year: Int, calendar: Calendar = .current) -> DateInterval? {
     var components = DateComponents(year: year, month: monthIndex, day: 1)
     
     guard let startDate = calendar.date(from: components),
@@ -92,7 +92,7 @@ func dateIntervalForMonthIndex(_ monthIndex: Int, in year: Int, calendar: Calend
 }
  
 
-extension Calendar {
+nonisolated extension Calendar {
     
     func month(index: Int) -> DateInterval {
         let components = DateComponents(year: currentYear, month: index, day: 1)
@@ -136,7 +136,7 @@ extension Calendar {
 }
 
 
-struct Timestamp: Equatable, Hashable, Identifiable {
+struct Timestamp: Sendable, Equatable, Hashable, Identifiable {
     var id: TimeInterval { value }
     let value: TimeInterval
     

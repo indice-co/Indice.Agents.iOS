@@ -7,7 +7,7 @@
 
 import SwiftUI
 import AgentsModels
-import IndiceAgents
+import AgentsClient
 
 struct ChatListView: View {
     
@@ -41,6 +41,9 @@ struct ChatListView: View {
                     .buttonStyle(.plain)
                     .swipeActions(content: {
                         DeleteAction(chat)
+                    })
+                    .onAppear(perform: {
+                        state.fetchHistory(after: chat)
                     })
                 }
             } header: {

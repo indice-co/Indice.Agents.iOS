@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 import AgentsModels
-@testable import IndiceAgents
+@testable import AgentsClient
 
 @Suite(.timeLimit(.minutes(1)))
 struct StreamingBufferTests {

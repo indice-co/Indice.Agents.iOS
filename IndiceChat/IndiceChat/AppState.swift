@@ -7,7 +7,7 @@
 
 import Foundation
 import Combine
-import IndiceAgents
+import AgentsClient
 import AgentsModels
 import IdentityClient
 import NetworkUtilities
@@ -42,6 +42,16 @@ final class AppState: ViewModel {
     
     var canQuickLogin: Bool {
         client.tokens.refreshToken != nil
+    }
+    
+    override init() {
+        super.init()
+        
+        self.chatService
+            .history
+            .publisher(transformation: { $0?.sections() })
+            .replaceNil(with: [])
+            .assign(to: &$chatSections)
     }
     
     func tryRefreshLogin(_ onSuccess: @escaping () -> Void) {
@@ -84,16 +94,24 @@ final class AppState: ViewModel {
         }
     }
     
+    func fetchHistory(after item: ConversationListItem) {
+        loadAsync({
+            try await $0
+                .chatService
+                .updateHistory(after: item)
+        }, with: .init(loadSilently: true))
+    }
     
     func refreshChats(force: Bool, onSuccess: (() -> Void)? = nil) {
         guard force || chatSections.isEmpty else { return }
         
-        loadAsync {
-            try await $0.client.agents.chatsService.chats()
-        } onSuccess: { [weak self] result in
-            self?.chatSections = (result.items ?? []).sections()
-            onSuccess?()
-        }
+        loadAsync({
+            await $0.chatService.resetHistory()
+            try await $0.chatService.updateHistory(after: nil)
+        }, with: .init(
+            loadSilently: !self.chatSections.isEmpty,
+            onSuccess: { onSuccess?() }
+        ))
     }
     
     func delete(chatID: UUID) {
@@ -117,7 +135,8 @@ private extension ConversationListItem {
     }
 }
 
-private extension Array where Element == ConversationListItem {
+private nonisolated extension Array where Element == ConversationListItem {
+    
     func sections() -> [AppState.ChatHistorySection]  {
         let grouped = Dictionary(
             grouping: self,

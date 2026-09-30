@@ -9,7 +9,7 @@ import Foundation
 import IdentityClient
 import NetworkClient
 import AgentsModels
-import IndiceAgents
+import AgentsClient
 
 
 public extension Decodable {
@@ -102,7 +102,7 @@ final class PersistentTokenStorage: TokenStorage, @unchecked Sendable {
     }
 }
 
-struct KeychainItem {
+nonisolated struct KeychainItem {
     // MARK: Types
     
     enum KeychainError: Error {
@@ -236,7 +236,7 @@ struct KeychainItem {
     }
 }
 
-extension KeychainItem {
+nonisolated extension KeychainItem {
     
     private enum Key: String {
         case deviceId     = "deviceId"

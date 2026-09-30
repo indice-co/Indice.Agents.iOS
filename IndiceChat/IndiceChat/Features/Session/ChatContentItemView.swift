@@ -1,6 +1,6 @@
 import SwiftUI
 import UIKit
-import IndiceAgents
+import AgentsClient
 
 /// The showcase's dispatch point. A host app can switch over the same enum and
 /// provide different native components without changing the API/network layers.

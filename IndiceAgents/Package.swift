@@ -4,15 +4,18 @@
 import PackageDescription
 
 let package = Package(
-    name: "IndiceAgents",
+    name: "Indice.Agents",
     platforms: [.iOS(.v15), .macOS(.v12)],
     products: [
         .library(
             name: "AgentsModels",
             targets: ["AgentsModels"]),
         .library(
-            name: "IndiceAgents",
-            targets: ["IndiceAgents"]),
+            name: "AgentsClient",
+            targets: ["AgentsClient"]),
+        .library(
+            name: "AgentsUI",
+            targets: ["AgentsUI"]),
     ],
     dependencies: [
         .package(name: "Indice.Swift.Networking", path: "../../Networking.iOS"),
@@ -25,7 +28,7 @@ let package = Package(
             ],
         ),
         .target(
-            name: "IndiceAgents",
+            name: "AgentsClient",
             dependencies: [
                 "AgentsModels",
                 .product(name: "NetworkUtilities", package: "Indice.Swift.Networking"),
@@ -34,9 +37,18 @@ let package = Package(
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ],
         ),
+        .target(
+            name: "AgentsUI",
+            dependencies: [
+                "AgentsClient",
+            ],
+            swiftSettings: [
+                .enableUpcomingFeature("ApproachableConcurrency"),
+            ],
+        ),
         .testTarget(
-            name: "IndiceAgentsTests",
-            dependencies: ["IndiceAgents"],
+            name: "AgentsClientTests",
+            dependencies: ["AgentsClient"],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ],

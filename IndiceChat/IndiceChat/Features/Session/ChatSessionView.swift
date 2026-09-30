@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import IndiceAgents
+import AgentsClient
 import AgentsModels
 
 struct ChatSessionView: View {

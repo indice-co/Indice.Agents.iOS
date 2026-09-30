@@ -11,7 +11,8 @@
 		4332786E306BD79500B4FDBA /* NetworkClient in Frameworks */ = {isa = PBXBuildFile; productRef = 4332786D306BD79500B4FDBA /* NetworkClient */; };
 		43327870306BD79500B4FDBA /* NetworkStream in Frameworks */ = {isa = PBXBuildFile; productRef = 4332786F306BD79500B4FDBA /* NetworkStream */; };
 		43327872306BD79500B4FDBA /* NetworkUtilities in Frameworks */ = {isa = PBXBuildFile; productRef = 43327871306BD79500B4FDBA /* NetworkUtilities */; };
-		436606362FFD083B00EA03EF /* IndiceAgents in Frameworks */ = {isa = PBXBuildFile; productRef = 436606352FFD083B00EA03EF /* IndiceAgents */; };
+		433278CE306BEB5B00B4FDBA /* AgentsClient in Frameworks */ = {isa = PBXBuildFile; productRef = 433278CD306BEB5B00B4FDBA /* AgentsClient */; };
+		433278D0306BEB5B00B4FDBA /* AgentsModels in Frameworks */ = {isa = PBXBuildFile; productRef = 433278CF306BEB5B00B4FDBA /* AgentsModels */; };
 		438B55DE30656AEB0082A5CD /* agents.ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */; };
 /* End PBXBuildFile section */
 
@@ -45,10 +46,11 @@
 		000000000000000130000000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				436606362FFD083B00EA03EF /* IndiceAgents in Frameworks */,
+				433278CE306BEB5B00B4FDBA /* AgentsClient in Frameworks */,
 				43327872306BD79500B4FDBA /* NetworkUtilities in Frameworks */,
 				4332786B306BD78700B4FDBA /* IdentityClient in Frameworks */,
 				4332786E306BD79500B4FDBA /* NetworkClient in Frameworks */,
+				433278D0306BEB5B00B4FDBA /* AgentsModels in Frameworks */,
 				43327870306BD79500B4FDBA /* NetworkStream in Frameworks */,
 			);
 		};
@@ -60,6 +62,7 @@
 			children = (
 				000000000000000000000010 /* IndiceChat */,
 				438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */,
+				43327880306BEAF500B4FDBA /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -70,6 +73,13 @@
 				000000000000000000000120 /* IndiceChat.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		43327880306BEAF500B4FDBA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -90,11 +100,12 @@
 			);
 			name = IndiceChat;
 			packageProductDependencies = (
-				436606352FFD083B00EA03EF /* IndiceAgents */,
 				4332786A306BD78700B4FDBA /* IdentityClient */,
 				4332786D306BD79500B4FDBA /* NetworkClient */,
 				4332786F306BD79500B4FDBA /* NetworkStream */,
 				43327871306BD79500B4FDBA /* NetworkUtilities */,
+				433278CD306BEB5B00B4FDBA /* AgentsClient */,
+				433278CF306BEB5B00B4FDBA /* AgentsModels */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* IndiceChat.app */;
@@ -125,9 +136,9 @@
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				436606342FFD083B00EA03EF /* XCLocalSwiftPackageReference "../IndiceAgents" */,
 				43327869306BD78700B4FDBA /* XCLocalSwiftPackageReference "../../Identity.iOS" */,
 				4332786C306BD79500B4FDBA /* XCLocalSwiftPackageReference "../../Networking.iOS" */,
+				433278CC306BEB5B00B4FDBA /* XCLocalSwiftPackageReference "../IndiceAgents" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -327,7 +338,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 27.0;
 			};
@@ -371,7 +382,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 27.0;
 			};
@@ -407,7 +418,7 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../Networking.iOS;
 		};
-		436606342FFD083B00EA03EF /* XCLocalSwiftPackageReference "../IndiceAgents" */ = {
+		433278CC306BEB5B00B4FDBA /* XCLocalSwiftPackageReference "../IndiceAgents" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../IndiceAgents;
 		};
@@ -430,9 +441,13 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = NetworkUtilities;
 		};
-		436606352FFD083B00EA03EF /* IndiceAgents */ = {
+		433278CD306BEB5B00B4FDBA /* AgentsClient */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = IndiceAgents;
+			productName = AgentsClient;
+		};
+		433278CF306BEB5B00B4FDBA /* AgentsModels */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentsModels;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
