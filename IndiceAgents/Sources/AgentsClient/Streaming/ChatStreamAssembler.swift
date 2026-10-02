@@ -127,15 +127,23 @@ struct ChatStreamAssembler {
             guard conversationID == nil, let id = frame.conversationId else {
                 throw AgentsError.invalidStream("Expected one start frame with a conversation ID.")
             }
+            
             conversationID = id
             guestSession = frame.guestSession
+            
             return .started(id)
+            
         case .error(let frame):
             hasTerminated = true
             document = .object([:]) // Failed answers are not persisted by the server.
+            
             throw AgentsError.streamFailed(frame.reason)
+            
         default:
-            guard conversationID != nil else { throw AgentsError.invalidStream("Received a frame before start.") }
+            guard conversationID != nil else {
+                throw AgentsError.invalidStream("Received a frame before start.")
+            }
+            
             switch event {
             case .status(let frame): return .status(frame.value)
             case .delta(let frame):
@@ -143,12 +151,16 @@ struct ChatStreamAssembler {
                 return .changed
             case .done:
                 let result = try response()
+                
                 guard let messages = result.messages, !messages.isEmpty else {
                     throw AgentsError.invalidStream("The completed response contains no messages.")
                 }
+                
                 hasTerminated = true
                 isComplete = true
+                
                 return .completed(result)
+                
             default: return .ignored
             }
         }

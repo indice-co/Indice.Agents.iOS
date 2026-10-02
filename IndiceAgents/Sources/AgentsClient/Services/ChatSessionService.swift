@@ -37,10 +37,12 @@ public actor ChatSessionService {
         public var text: String {
             items.compactMap { item -> String? in
                 switch item.content {
-                case .text(let value), .markdown(let value): value
+                case .text(let value),
+                     .markdown(let value): value
+                    
                 default: nil
                 }
-            }.joined()
+            }.joined(separator: "\n")
         }
 
         public init(id: UUID = UUID(), value: DexChatMessage, delivery: Delivery = .complete) {
@@ -60,9 +62,14 @@ public actor ChatSessionService {
         case failed(String)
     }
 
-    @MainActor public let messages = CurrentValueSubject<[Message], Never>([])
-    @MainActor public let streamState = CurrentValueSubject<StreamState, Never>(.idle)
-    @MainActor private let metadataSubject = CurrentValueSubject<ChatSessionMetadata, Never>(.init())
+    @MainActor
+    public let messages = CurrentValueSubject<[Message], Never>([])
+    
+    @MainActor
+    public let streamState = CurrentValueSubject<StreamState, Never>(.idle)
+    
+    @MainActor
+    private let metadataSubject = CurrentValueSubject<ChatSessionMetadata, Never>(.init())
 
     /// Replays the latest metadata and publishes updates on MainActor.
     @MainActor public var metadata: AnyPublisher<ChatSessionMetadata, Never> {
@@ -165,12 +172,14 @@ public actor ChatSessionService {
             let response = try await withThrowingTaskGroup(of: DexChatResponse.self) { group in
                 group.addTask { try await self.receive(stream, into: accumulator) }
                 group.addTask { try await self.publishProgress(from: accumulator) }
+                
                 // Completion or failure cancels the other child. The group joins
                 // both before any terminal publication, preventing stale updates
                 // from a suspended UI publication or from a previous turn.
                 defer { group.cancelAll() }
                 return try await group.next()!
             }
+            
             try Task.checkCancellation()
             lastResponse = response
             await present(response, delivery: .complete)
@@ -247,11 +256,21 @@ public actor ChatSessionService {
             // last batch when the server pauses. There is only one publisher;
             // if the main actor is busy, newer changes remain in the accumulator.
             try await Task.sleep(nanoseconds: UInt64(streamUpdateTimeInterval * 1_000_000_000))
+            
             let snapshot = try await accumulator.snapshot()
+            
             try Task.checkCancellation()
-            if let response = snapshot.response { await present(response, delivery: .streaming) }
+            
+            if let response = snapshot.response {
+                await present(response, delivery: .streaming)
+            }
+            
             try Task.checkCancellation()
-            if let status = snapshot.status { await publishState(.receiving(status: status)) }
+            
+            if let status = snapshot.status {
+                await publishState(.receiving(status: status))
+            }
+            
             await accumulator.didPublish(snapshot)
         }
     }
@@ -303,6 +322,7 @@ public actor ChatSessionService {
             }
             return Message(id: responseIDs[index], value: value, delivery: delivery)
         }
+        
         await publishHistory()
     }
 

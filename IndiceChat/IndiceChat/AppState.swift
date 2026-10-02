@@ -23,37 +23,16 @@ final class AppState: ViewModel {
         var id: Int { hashValue }
     }
     
-    struct ChatHistorySection: Hashable {
-        var date: Date
-        var list: [ConversationListItem]
-    }
-    
-    private let client = ChatClient()
-        
-    var chatService: ChatService { client.agents.chatsService }
-    
+    let client = ChatClient()
+            
     @Published
     var loginData: LoginData?
-    
-    @Published
-    private(set)
-    var chatSections: [ChatHistorySection] = []
     
     
     var canQuickLogin: Bool {
         client.tokens.refreshToken != nil
     }
-    
-    override init() {
-        super.init()
         
-        self.chatService
-            .history
-            .publisher(transformation: { $0?.sections() })
-            .replaceNil(with: [])
-            .assign(to: &$chatSections)
-    }
-    
     func tryRefreshLogin(_ onSuccess: @escaping () -> Void) {
         loadAsync {
             try await $0.client
@@ -93,90 +72,4 @@ final class AppState: ViewModel {
             onSuccess()
         }
     }
-    
-    func fetchHistory(after item: ConversationListItem) {
-        loadAsync({
-            try await $0
-                .chatService
-                .updateHistory(after: item)
-        }, with: .init(loadSilently: true))
-    }
-    
-    func refreshChats(force: Bool, onSuccess: (() -> Void)? = nil) {
-        guard force || chatSections.isEmpty else { return }
-        
-        loadAsync({
-            await $0.chatService.resetHistory()
-            try await $0.chatService.updateHistory(after: nil)
-        }, with: .init(
-            loadSilently: !self.chatSections.isEmpty,
-            onSuccess: { onSuccess?() }
-        ))
-    }
-    
-    func delete(chatID: UUID) {
-        loadAsync {
-            try await $0.client.agents
-                .chatsService
-                .delete(chatID: chatID)
-            
-        } onSuccess: { [weak self] in
-            self?
-                .chatSections
-                .remove(chatID: chatID)
-        }
-    }
-}
-
-
-private extension ConversationListItem {
-    var orderDate: Date {
-        self.lastActivityAt ?? .distantPast
-    }
-}
-
-private nonisolated extension Array where Element == ConversationListItem {
-    
-    func sections() -> [AppState.ChatHistorySection]  {
-        let grouped = Dictionary(
-            grouping: self,
-            by: { $0.orderDate.removingTimeStamp() })
-        
-        let keys = grouped.keys.sorted(by: >)
-        
-        return keys.compactMap { key in
-            guard let section = grouped[key] else {
-                return nil
-            }
-            
-            let sorted = section.sorted(by: { $0.orderDate > $1.orderDate })
-            
-            return .init(date: key, list: sorted)
-        }
-    }
-}
-
-
-private extension Array where Element == AppState.ChatHistorySection {
-    
-    mutating
-    func remove(chatID: ConversationListItem.ID) {
-        let sectionIndex = self.firstIndex(where: {
-            $0
-                .list
-                .contains(where: { item in item.id == chatID })
-        })
-        
-        guard let sectionIndex else { return }
-        
-        var section = self[sectionIndex]
-        section.list.removeAll(where: { $0.id == chatID })
-        
-        if section.list.isEmpty {
-            self.remove(at: sectionIndex)
-        } else {
-            self[sectionIndex] = section
-        }
-    }
-    
 }

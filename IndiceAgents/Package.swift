@@ -23,6 +23,9 @@ let package = Package(
     targets: [
         .target(
             name: "AgentsModels",
+            resources: [
+                .process("Resources"),
+            ],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ],
@@ -40,7 +43,10 @@ let package = Package(
         .target(
             name: "AgentsUI",
             dependencies: [
-                "AgentsClient",
+                "AgentsClient"
+                    ],
+            resources: [
+                .process("Resources"),
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
@@ -53,5 +59,6 @@ let package = Package(
                 .enableUpcomingFeature("ApproachableConcurrency"),
             ],
         ),
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )

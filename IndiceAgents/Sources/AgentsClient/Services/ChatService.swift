@@ -10,7 +10,7 @@ public actor ChatService {
     nonisolated
     public let history: ValueState<[ConversationListItem]?> = .init()
     
-
+    
     init(repository: ChatRepository) {
         self.repository = repository
         self.historyPager = .init(

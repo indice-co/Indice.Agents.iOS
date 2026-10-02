@@ -13,6 +13,7 @@
 		43327872306BD79500B4FDBA /* NetworkUtilities in Frameworks */ = {isa = PBXBuildFile; productRef = 43327871306BD79500B4FDBA /* NetworkUtilities */; };
 		433278CE306BEB5B00B4FDBA /* AgentsClient in Frameworks */ = {isa = PBXBuildFile; productRef = 433278CD306BEB5B00B4FDBA /* AgentsClient */; };
 		433278D0306BEB5B00B4FDBA /* AgentsModels in Frameworks */ = {isa = PBXBuildFile; productRef = 433278CF306BEB5B00B4FDBA /* AgentsModels */; };
+		43329877306D49A200B4FDBA /* AgentsUI in Frameworks */ = {isa = PBXBuildFile; productRef = 43329876306D49A200B4FDBA /* AgentsUI */; };
 		438B55DE30656AEB0082A5CD /* agents.ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */; };
 /* End PBXBuildFile section */
 
@@ -51,6 +52,7 @@
 				4332786B306BD78700B4FDBA /* IdentityClient in Frameworks */,
 				4332786E306BD79500B4FDBA /* NetworkClient in Frameworks */,
 				433278D0306BEB5B00B4FDBA /* AgentsModels in Frameworks */,
+				43329877306D49A200B4FDBA /* AgentsUI in Frameworks */,
 				43327870306BD79500B4FDBA /* NetworkStream in Frameworks */,
 			);
 		};
@@ -106,6 +108,7 @@
 				43327871306BD79500B4FDBA /* NetworkUtilities */,
 				433278CD306BEB5B00B4FDBA /* AgentsClient */,
 				433278CF306BEB5B00B4FDBA /* AgentsModels */,
+				43329876306D49A200B4FDBA /* AgentsUI */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* IndiceChat.app */;
@@ -304,6 +307,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6HUU3RVA95;
@@ -322,7 +327,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
@@ -348,6 +353,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6HUU3RVA95;
@@ -366,7 +373,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
@@ -448,6 +455,11 @@
 		433278CF306BEB5B00B4FDBA /* AgentsModels */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = AgentsModels;
+		};
+		43329876306D49A200B4FDBA /* AgentsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 433278CC306BEB5B00B4FDBA /* XCLocalSwiftPackageReference "../IndiceAgents" */;
+			productName = AgentsUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

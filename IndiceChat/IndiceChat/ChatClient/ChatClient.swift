@@ -37,7 +37,9 @@ final class ChatClient: @unchecked Sendable {
         }
         
         let interceptors: [NetworkClient.Interceptor] = [
-            AuthInterceptor(tokenProvider: tokenProvider, authProvider: authProvider)
+            AuthInterceptor(
+                tokenProvider: tokenProvider,
+                authProvider: authProvider)
         ]
         
         let network = NetworkClient(
