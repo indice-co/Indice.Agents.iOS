@@ -8,7 +8,7 @@ struct IndiceChatApp: App {
     
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
+            NavigatorWrapper {
                 LoginView()
             }
             .presentPropagatedErrors()

@@ -7,7 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		436606362FFD083B00EA03EF /* IndiceAgents in Frameworks */ = {isa = PBXBuildFile; productRef = 436606352FFD083B00EA03EF /* IndiceAgents */; };
+		4332786B306BD78700B4FDBA /* IdentityClient in Frameworks */ = {isa = PBXBuildFile; productRef = 4332786A306BD78700B4FDBA /* IdentityClient */; };
+		4332786E306BD79500B4FDBA /* NetworkClient in Frameworks */ = {isa = PBXBuildFile; productRef = 4332786D306BD79500B4FDBA /* NetworkClient */; };
+		43327870306BD79500B4FDBA /* NetworkStream in Frameworks */ = {isa = PBXBuildFile; productRef = 4332786F306BD79500B4FDBA /* NetworkStream */; };
+		43327872306BD79500B4FDBA /* NetworkUtilities in Frameworks */ = {isa = PBXBuildFile; productRef = 43327871306BD79500B4FDBA /* NetworkUtilities */; };
+		433278CE306BEB5B00B4FDBA /* AgentsClient in Frameworks */ = {isa = PBXBuildFile; productRef = 433278CD306BEB5B00B4FDBA /* AgentsClient */; };
+		433278D0306BEB5B00B4FDBA /* AgentsModels in Frameworks */ = {isa = PBXBuildFile; productRef = 433278CF306BEB5B00B4FDBA /* AgentsModels */; };
+		43416EA23075180100D3B0E6 /* NetworkClient in Frameworks */ = {isa = PBXBuildFile; productRef = 43416EA13075180100D3B0E6 /* NetworkClient */; };
+		43416EA43075180100D3B0E6 /* NetworkStream in Frameworks */ = {isa = PBXBuildFile; productRef = 43416EA33075180100D3B0E6 /* NetworkStream */; };
+		43416ED130751B0D00D3B0E6 /* AgentsClient in Frameworks */ = {isa = PBXBuildFile; productRef = 43416ED030751B0D00D3B0E6 /* AgentsClient */; };
+		43416ED330751B0D00D3B0E6 /* AgentsModels in Frameworks */ = {isa = PBXBuildFile; productRef = 43416ED230751B0D00D3B0E6 /* AgentsModels */; };
+		43416ED530751B0D00D3B0E6 /* AgentsUI in Frameworks */ = {isa = PBXBuildFile; productRef = 43416ED430751B0D00D3B0E6 /* AgentsUI */; };
 		438B55DE30656AEB0082A5CD /* agents.ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */; };
 /* End PBXBuildFile section */
 
@@ -41,7 +51,17 @@
 		000000000000000130000000 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
-				436606362FFD083B00EA03EF /* IndiceAgents in Frameworks */,
+				43416ED330751B0D00D3B0E6 /* AgentsModels in Frameworks */,
+				433278CE306BEB5B00B4FDBA /* AgentsClient in Frameworks */,
+				43327872306BD79500B4FDBA /* NetworkUtilities in Frameworks */,
+				4332786B306BD78700B4FDBA /* IdentityClient in Frameworks */,
+				4332786E306BD79500B4FDBA /* NetworkClient in Frameworks */,
+				43416ED530751B0D00D3B0E6 /* AgentsUI in Frameworks */,
+				433278D0306BEB5B00B4FDBA /* AgentsModels in Frameworks */,
+				43416EA43075180100D3B0E6 /* NetworkStream in Frameworks */,
+				43416EA23075180100D3B0E6 /* NetworkClient in Frameworks */,
+				43416ED130751B0D00D3B0E6 /* AgentsClient in Frameworks */,
+				43327870306BD79500B4FDBA /* NetworkStream in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -52,6 +72,7 @@
 			children = (
 				000000000000000000000010 /* IndiceChat */,
 				438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */,
+				43327880306BEAF500B4FDBA /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -62,6 +83,13 @@
 				000000000000000000000120 /* IndiceChat.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		43327880306BEAF500B4FDBA /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -82,7 +110,17 @@
 			);
 			name = IndiceChat;
 			packageProductDependencies = (
-				436606352FFD083B00EA03EF /* IndiceAgents */,
+				4332786A306BD78700B4FDBA /* IdentityClient */,
+				4332786D306BD79500B4FDBA /* NetworkClient */,
+				4332786F306BD79500B4FDBA /* NetworkStream */,
+				43327871306BD79500B4FDBA /* NetworkUtilities */,
+				433278CD306BEB5B00B4FDBA /* AgentsClient */,
+				433278CF306BEB5B00B4FDBA /* AgentsModels */,
+				43416EA13075180100D3B0E6 /* NetworkClient */,
+				43416EA33075180100D3B0E6 /* NetworkStream */,
+				43416ED030751B0D00D3B0E6 /* AgentsClient */,
+				43416ED230751B0D00D3B0E6 /* AgentsModels */,
+				43416ED430751B0D00D3B0E6 /* AgentsUI */,
 			);
 			productName = MyApp;
 			productReference = 000000000000000000000120 /* IndiceChat.app */;
@@ -113,7 +151,9 @@
 			mainGroup = 000000000000000000000001;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				436606342FFD083B00EA03EF /* XCLocalSwiftPackageReference "../IndiceAgents" */,
+				43416E9F307517A300D3B0E6 /* XCRemoteSwiftPackageReference "Indice.Identity" */,
+				43416EA03075180100D3B0E6 /* XCRemoteSwiftPackageReference "Indice.Swift" */,
+				43416ECF30751B0D00D3B0E6 /* XCLocalSwiftPackageReference "../../Agents.iOS" */,
 			);
 			preferredProjectObjectVersion = 90;
 			productRefGroup = 000000000000000000000020 /* Products */;
@@ -279,6 +319,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6HUU3RVA95;
@@ -297,7 +339,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
@@ -313,7 +355,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 27.0;
 			};
@@ -323,6 +365,8 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 438B55DD30656AEB0082A5CD /* agents.ios.xcconfig */;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 6HUU3RVA95;
@@ -341,7 +385,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
@@ -357,7 +401,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 27.0;
 			};
@@ -385,16 +429,77 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		436606342FFD083B00EA03EF /* XCLocalSwiftPackageReference "../IndiceAgents" */ = {
+		43416ECF30751B0D00D3B0E6 /* XCLocalSwiftPackageReference "../../Agents.iOS" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../IndiceAgents;
+			relativePath = ../../Agents.iOS;
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		43416E9F307517A300D3B0E6 /* XCRemoteSwiftPackageReference "Indice.Identity" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/indice-co/Indice.Identity.iOS";
+			requirement = {
+				branch = feature/decouple;
+				kind = branch;
+			};
+		};
+		43416EA03075180100D3B0E6 /* XCRemoteSwiftPackageReference "Indice.Swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/indice-co/Indice.Swift.Networking";
+			requirement = {
+				branch = feature/sse;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
-		436606352FFD083B00EA03EF /* IndiceAgents */ = {
+		4332786A306BD78700B4FDBA /* IdentityClient */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = IndiceAgents;
+			productName = IdentityClient;
+		};
+		4332786D306BD79500B4FDBA /* NetworkClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NetworkClient;
+		};
+		4332786F306BD79500B4FDBA /* NetworkStream */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NetworkStream;
+		};
+		43327871306BD79500B4FDBA /* NetworkUtilities */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = NetworkUtilities;
+		};
+		433278CD306BEB5B00B4FDBA /* AgentsClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentsClient;
+		};
+		433278CF306BEB5B00B4FDBA /* AgentsModels */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentsModels;
+		};
+		43416EA13075180100D3B0E6 /* NetworkClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 43416EA03075180100D3B0E6 /* XCRemoteSwiftPackageReference "Indice.Swift" */;
+			productName = NetworkClient;
+		};
+		43416EA33075180100D3B0E6 /* NetworkStream */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 43416EA03075180100D3B0E6 /* XCRemoteSwiftPackageReference "Indice.Swift" */;
+			productName = NetworkStream;
+		};
+		43416ED030751B0D00D3B0E6 /* AgentsClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentsClient;
+		};
+		43416ED230751B0D00D3B0E6 /* AgentsModels */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentsModels;
+		};
+		43416ED430751B0D00D3B0E6 /* AgentsUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AgentsUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

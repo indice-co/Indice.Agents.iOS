@@ -7,6 +7,7 @@
 
 import SwiftUI
 import IdentityClient
+import AgentsUI
 
 struct LoginView: View {
     
@@ -17,44 +18,41 @@ struct LoginView: View {
     
     @Environment(\.openURL) private var openURL
     @EnvironmentObject var state: AppState
+    @EnvironmentObject var route: Router
     
     @State private var url: URL?
     @State private var delegate: SafariViewDelegate = .init()
-    
-    @State private var loginState: LoginState? = nil
-    
+
     @State private var days: Int = .random(in: 0 ... 100)
     
+    
     var body: some View {
-        
         VStack {
-            
-            Spacer()
-            
-            Dex
-                .ImageAndName(.vertical(positioning: .nameIcon), size: .hero)
-                .padding(.bottom)
-            
-            Text("Lets talk about it.")
-                .font(.system(size: 36).bold())
-            
-            Spacer()
+            VStack {
+                Dex
+                    .ImageAndName(.vertical(positioning: .nameIcon), size: .hero)
+                    .padding(.bottom)
+                
+                Text("Lets talk about it.")
+                    .font(.system(size: 36).bold())
+            }
+            .frame(maxHeight: .infinity)
             
             VStack(spacing: 12) {
-                Button("Login", action: { state.initializeLogin() })
-                    .buttonStyle(.glass(.regular.tint(.brand)))
-                    .buttonSizing(.flexible)
+                Button(action: { state.initializeLogin() }) {
+                    Text("Login").frame(maxWidth: .infinity)
+                }
+                .buttonStyleGlassOrFallback(.brand)
                 
                 if state.canQuickLogin {
-                    Button(action: { state.tryRefreshLogin({ loginState = .resume }) }) {
-                        HStack {
-                            Text("Resume your previous session \(Image.Forward())")
-                                .underline()
-                                .foregroundStyle(.secondary)
-                        }
+                    Button(action: { state.tryRefreshLogin({ route.navigate(to: .list) }) }) {
+                        Text("Resume your previous session \(Image.Forward())")
+                            .underline()
+                            .foregroundStyle(.secondary)
+                            .padding(.vertical, 4)
+                            .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
-                    .buttonSizing(.flexible)
                 }
             }
             .padding()
@@ -63,7 +61,7 @@ struct LoginView: View {
             Text("Days since leaking private API keys... \(days.formatted())")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                .contentTransition(.numericText(value: Double(days)))
+                .modifier(ContentNumericModifier(value: Double(days)))
                 .animation(.bouncy, value: days)
                 .task {
                     while !Task.isCancelled {
@@ -79,20 +77,31 @@ struct LoginView: View {
         .fullScreenCover(item: $state.loginData, content: { data in
             SafariView(url: data.url)
         })
+        .observeState(on: state)
         .onOpenURL(perform: handleCallbackURL(_:))
-        .navigationDestination(
-            item: $loginState,
-            destination: { state in ChatListView(navigateToRecentChat: state == .resume) })
+        .navigationDestination(for: Destinations.self) { destination in
+            switch destination {
+            case .list:
+                AgentsUI::HistoryScreen(
+                    state.client.agents,
+                    onSelection: { route.navigate(to: .chat($0)) })
+            case .chat(let chatID):
+                AgentsUI::SessionScreen(
+                    state.client.agents,
+                    chatID: chatID)
+            }
+        }
     }
-
+    
+     
     private func handleCallbackURL(_ url: URL) {
         guard url.scheme == "indice.mobile" else {
             return
         }
         
-        state.completeLogin(returnURL: url, onSuccess: {
-            loginState = .login
-        })
+        state.completeLogin(
+            returnURL: url,
+            onSuccess: { route.navigate(to: .list) })
     }
     
 }
@@ -101,9 +110,26 @@ extension URL: @retroactive Identifiable {
     public var id: String { self.absoluteString }
 }
 
+
+private struct ContentNumericModifier: ViewModifier {
+    
+    let value: Double
+    
+    func body(content: Content) -> some View {
+        if #available(iOS 17, *) {
+            content.contentTransition(.numericText(value: value))
+        } else {
+            content.animation(.default, value: value)
+        }
+    }
+}
+
+
+
 #Preview {
     LoginView()
         .environmentObject(AppState())
 }
+
 
 
