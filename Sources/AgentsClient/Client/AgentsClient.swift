@@ -13,6 +13,11 @@ import NetworkUtilities
 public final class AgentsClient: @unchecked Sendable {
     
     
+    final actor AgentSession {
+        
+    }
+    
+    
     public typealias Error = AgentsError
     public typealias NetworkProcessor = RequestProcessor & StreamProcessor
     
@@ -21,8 +26,6 @@ public final class AgentsClient: @unchecked Sendable {
     private let processorBuilder: () -> NetworkProcessor
     
 
-    /// Opt into the administrative document scope only when the identity client
-    /// registration and the signed-in user are allowed to ingest/clear documents.
     public init(
         configuration: Configuration,
         processorBuilder: @escaping () -> NetworkProcessor
@@ -44,6 +47,7 @@ public final class AgentsClient: @unchecked Sendable {
             let service = ChatService(repository: .init(
                 endpoint: self.configuration.baseURL,
                 client: networkClient))
+            
             chatsServiceInstance = service
             return service
         }

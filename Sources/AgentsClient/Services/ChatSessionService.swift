@@ -206,6 +206,7 @@ public actor ChatSessionService {
             
             throw error
         }
+        
         // The stream has been closed and the reply committed before this request.
         refreshMetadata()
     }

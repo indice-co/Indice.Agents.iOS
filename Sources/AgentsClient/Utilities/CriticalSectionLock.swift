@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// Just a wrapper over a lower level lock
+/// Just a wrapper over a lower level `os_unfair_lock`.
 /// - warning:
 /// **NON RE-ENTRANT**
 public final class CriticalSectionLock: @unchecked Sendable {
@@ -27,7 +27,9 @@ public final class CriticalSectionLock: @unchecked Sendable {
 }
 
 
+/// A wrapper over an `NSRecursiveLock`.
 public final class ReentrantSectionLock: @unchecked Sendable {
+    
     private var lock = NSRecursiveLock()
     
     public init() { }

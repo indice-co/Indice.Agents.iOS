@@ -18,7 +18,7 @@ let package = Package(
             targets: ["AgentsUI"]),
     ],
     dependencies: [
-        .package(name: "Indice.Swift.Networking", path: "../../Networking.iOS"),
+        .package(url: "https://github.com/indice-co/Indice.HTTP.Swift", .upToNextMajor(from: "1.0.0"))
     ],
     targets: [
         .target(
@@ -34,7 +34,7 @@ let package = Package(
             name: "AgentsClient",
             dependencies: [
                 "AgentsModels",
-                .product(name: "NetworkUtilities", package: "Indice.Swift.Networking"),
+                .product(name: "NetworkUtilities", package: "Indice.HTTP.Swift"),
             ],
             swiftSettings: [
                 .enableUpcomingFeature("ApproachableConcurrency"),
@@ -44,7 +44,7 @@ let package = Package(
             name: "AgentsUI",
             dependencies: [
                 "AgentsClient"
-                    ],
+            ],
             resources: [
                 .process("Resources"),
             ],

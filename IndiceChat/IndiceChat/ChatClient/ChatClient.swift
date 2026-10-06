@@ -57,7 +57,10 @@ final class ChatClient: @unchecked Sendable {
                 errorParser: .identityErrorParser))
         
         let agents = AgentsClient(
-            configuration: .init(baseURL: URL(string: "https://agents.indice.gr")!),
+            configuration: .init(
+                baseURL: URL(string: "https://agents.indice.gr")!,
+                userContext: .guestSession
+            ),
             processorBuilder: { network })
         
         self.tokens = tokenStorage
@@ -71,7 +74,8 @@ final class ChatClient: @unchecked Sendable {
         try! identity
             .authService
             .authorizationUrl(withPkce: pkce)
-            .appendingQueryItems([.init(name: "acr_values", value: AcrValues.microsoft.value)])
+            .appending(queryItems: [.init(name: "acr_values", value: AcrValues.microsoft.value)])
+            // .appendingQueryItems([.init(name: "acr_values", value: AcrValues.microsoft.value)])
     }
     
     public func login(code: String, verifier: String) async throws {

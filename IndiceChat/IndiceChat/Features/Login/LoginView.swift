@@ -16,7 +16,6 @@ struct LoginView: View {
         case resume
     }
     
-    
     @Environment(\.openURL) private var openURL
     @EnvironmentObject var state: AppState
     @EnvironmentObject var route: Router
@@ -31,7 +30,7 @@ struct LoginView: View {
         VStack {
             VStack {
                 Dex
-                    .ImageAndName(.vertical(positioning: .nameIcon),size: .hero)
+                    .ImageAndName(.vertical(positioning: .nameIcon), size: .hero)
                     .padding(.bottom)
                 
                 Text("Lets talk about it.")
