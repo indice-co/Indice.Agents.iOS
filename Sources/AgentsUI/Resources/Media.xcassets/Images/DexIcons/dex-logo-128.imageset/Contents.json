@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "dex-logo-128.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
