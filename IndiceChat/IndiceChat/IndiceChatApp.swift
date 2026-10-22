@@ -1,5 +1,5 @@
 import SwiftUI
-import Playgrounds
+import AgentsUI
 
 @main
 struct IndiceChatApp: App {
@@ -9,7 +9,8 @@ struct IndiceChatApp: App {
     var body: some Scene {
         WindowGroup {
             NavigatorWrapper {
-                LoginView()
+                //LoginView()
+                AgentsHostScreen(client: state.client.agents)
             }
             .presentPropagatedErrors()
             .applyLoadingState()

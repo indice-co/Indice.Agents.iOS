@@ -10,9 +10,8 @@ import SwiftUI
 
 public extension Image {
     
-    static func Forward () -> Image { Image(systemName: "chevron.forward")  }
-    static func Backward() -> Image { Image(systemName: "chevron.backward") }
-    
-    static func NewChat()  -> Image { Image(systemName: "square.and.pencil") }
+    static let forward : Image = Image(systemName: "chevron.forward") 
+    static let backward: Image = Image(systemName: "chevron.backward")
+    static let newChat : Image = Image(systemName: "square.and.pencil")
     
 }

@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "Indice.Agents",
+    defaultLocalization: "en",
     platforms: [.iOS(.v15), .macOS(.v12)],
     products: [
         .library(

@@ -14,25 +14,14 @@ struct DEXToolbarModifier: ViewModifier {
     func body(content: Content) -> some View {
         if #available(iOS 26, macOS 26, *) {
             content.toolbar(content: {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: { onSelection(nil) }) {
-                        Image.NewChat()
-                    }
-                }
-                
                 ToolbarItem(placement: .topBarLeading) {
-                    Dex.ImageAndName(size: .small)
+                    // Dex.ImageAndName(size: .small)
+                    Image(systemName: "square.and.pencil")
                 }
                 .sharedBackgroundVisibility(.hidden)
             })
         } else {
             content.toolbar(content: {
-                ToolbarItem(placement: .primaryAction) {
-                    Button(action: { onSelection(nil) }) {
-                        Image.NewChat()
-                    }
-                }
-                
                 ToolbarItem(placement: .topBarLeading) {
                     Dex.ImageAndName(size: .small)
                 }

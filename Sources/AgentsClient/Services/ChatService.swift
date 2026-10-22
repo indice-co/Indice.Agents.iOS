@@ -3,7 +3,8 @@ import AgentsModels
 import Combine
 
 public actor ChatService {
-    
+
+    private let sessionStore: GuestSessionStore?
     private let repository: ChatRepository
     private let historyPager: Pager<ConversationListItem>
     
@@ -11,7 +12,8 @@ public actor ChatService {
     public let history: ValueState<[ConversationListItem]?> = .init()
     
     
-    init(repository: ChatRepository) {
+    init(sessionStore: GuestSessionStore?, repository: ChatRepository) {
+        self.sessionStore = sessionStore
         self.repository = repository
         self.historyPager = .init(
             items: history,
@@ -43,9 +45,11 @@ public actor ChatService {
         let conversation = try await repository.session(forChatId: id)
         
         let service = ChatSessionService(
+            sessionStore: sessionStore,
             repository: repository,
             chatID: id,
-            conversation: conversation)
+            conversation: conversation,
+            streamUpdateInterval: 0.01 /* 10 milliseconds */)
         
         await service.publishHistory()
         await service.publishMetadata()
@@ -56,7 +60,10 @@ public actor ChatService {
     /// Create a local session before sending. Its conversation ID arrives with
     /// the first REST response or SSE start frame, allowing the first turn to stream.
     public func newChat() -> ChatSessionService {
-        ChatSessionService(repository: repository, chatID: nil)
+        ChatSessionService(
+            sessionStore: sessionStore,
+            repository: repository,
+            chatID: nil)
     }
 
     public func createNewChat(message: String) async throws -> ChatSessionService {

@@ -10,21 +10,17 @@ import IdentityClient
 import AgentsUI
 
 struct LoginView: View {
-    
-    enum LoginState {
-        case login
-        case resume
-    }
-    
+        
     @Environment(\.openURL) private var openURL
     @EnvironmentObject var state: AppState
-    @EnvironmentObject var route: Router
+    // @EnvironmentObject var route: Router
     
     @State private var url: URL?
     @State private var delegate: SafariViewDelegate = .init()
 
     @State private var days: Int = .random(in: 0 ... 100)
     
+    @State private var showAgent = false
     
     var body: some View {
         VStack {
@@ -42,11 +38,11 @@ struct LoginView: View {
                 Button(action: { state.initializeLogin() }) {
                     Text("Login").frame(maxWidth: .infinity)
                 }
-                .buttonStyleGlassOrFallback(.brand)
+                .buttonStyleGlassOrFallback()
                 
                 if state.canQuickLogin {
-                    Button(action: { state.tryRefreshLogin({ route.navigate(to: .list) }) }) {
-                        Text("Resume your previous session \(Image.Forward())")
+                    Button(action: { state.tryRefreshLogin({ showAgent = true }) }) {
+                        Text("Resume your previous session \(Image.forward)")
                             .underline()
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 4)
@@ -62,7 +58,6 @@ struct LoginView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .modifier(ContentNumericModifier(value: Double(days)))
-                .animation(.bouncy, value: days)
                 .task {
                     while !Task.isCancelled {
                         let delay = Duration.seconds(Double.random(in: 0.2 ... 1.5))
@@ -79,18 +74,10 @@ struct LoginView: View {
         })
         .observeState(on: state)
         .onOpenURL(perform: handleCallbackURL(_:))
-        .navigationDestination(for: Destinations.self) { destination in
-            switch destination {
-            case .list:
-                AgentsUI::HistoryScreen(
-                    state.client.agents,
-                    onSelection: { route.navigate(to: .chat($0)) })
-            case .chat(let chatID):
-                AgentsUI::SessionScreen(
-                    state.client.agents,
-                    chatID: chatID)
-            }
-        }
+        .fullScreenCover(isPresented: $showAgent, content: {
+            AgentsHostScreen(client: state.client.agents)
+                .interactiveDismissDisabled()
+        })
     }
     
      
@@ -101,7 +88,7 @@ struct LoginView: View {
         
         state.completeLogin(
             returnURL: url,
-            onSuccess: { route.navigate(to: .list) })
+            onSuccess: { showAgent = true })
     }
     
 }

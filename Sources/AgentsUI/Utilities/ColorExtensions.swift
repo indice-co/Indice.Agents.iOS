@@ -7,6 +7,7 @@
 
 import SwiftUI
 
-public extension Color {
+package extension Color {
     static let brand = Color(.brand)
+    static let brandSecondary = Color(.brandSecondary)
 }

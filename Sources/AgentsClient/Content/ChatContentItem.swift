@@ -30,6 +30,17 @@ public struct ChatContentItem: Sendable, Equatable, Identifiable {
     }
 }
 
+private enum ContentType: String {
+    case multipleChoice = "application/vnd.indice.multiple-choice+json"
+    case callout = "application/vnd.indice.callout+json"
+    case confirmation = "application/vnd.indice.confirm+json"
+    case image = "application/vnd.indice.image+json"
+    case plainText = "text/plain"
+    case markdown = "text/markdown"
+    case text = "text"
+    case html = "text/html"
+}
+
 /// Maps API parts to view-independent content. It performs no networking and does
 /// not depend on UIKit, SwiftUI or WebKit; each host chooses its own components.
 public enum ChatContentMapper {
@@ -44,51 +55,89 @@ public enum ChatContentMapper {
             if previousParts.indices.contains(index), previousItems.indices.contains(index), previousParts[index] == part {
                 return previousItems[index]
             }
+            
             let parsed = classify(part)
+            
             return ChatContentItem(id: index, content: parsed.content, caption: parsed.caption)
         }
     }
 
     private static func classify(_ part: ChatMessagePart) -> (content: ChatContentItem.Content, caption: String?) {
         let type = mediaType(part.contentType)
+        let contentType = type.flatMap(ContentType.init(rawValue:))
         let caption = nonempty(part.name)
-        guard let value = part.value else { return (.unavailable(mediaType: type), caption) }
+        
+        func unavailable(mediaType: String? = nil) -> (content: ChatContentItem.Content, caption: String?) {
+            (.unavailable(mediaType: mediaType ?? type), caption)
+        }
+        
+        func unsupported(mediaType: String? = nil) -> (content: ChatContentItem.Content, caption: String?) {
+            (.unsupported(mediaType: mediaType ?? type), caption)
+        }
+        
+        
+        
+        guard let value = part.value else {
+            return unavailable()
+        }
+        
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-
+        
+        
         // These JSON envelopes become typed payloads for host-provided views.
         // Match the web client's defaults and preserve actionable labels verbatim.
-        switch type {
-        case "application/vnd.indice.multiple-choice+json":
-            guard let fields = jsonObject(value) else { return (.unavailable(mediaType: type), caption) }
-            let options: [String]
-            if case .array(let values) = fields["options"] {
-                options = values.compactMap(payloadString)
-            } else { options = [] }
-            return (.multipleChoice(.init(options: options)), caption)
-        case "application/vnd.indice.callout+json":
-            guard let fields = jsonObject(value), let text = payloadString(fields["text"]) else {
-                return (.unavailable(mediaType: type), caption)
+        switch contentType {
+        case .multipleChoice:
+            guard let fields = jsonObject(value) else {
+                return unavailable()
             }
+            
+            let options: [String] = {
+                guard let values = fields["options"]?.arrayValue else {
+                    return []
+                }
+                
+                return values.compactMap(payloadString)
+            }()
+            
+            return (.multipleChoice(.init(options: options)), caption)
+            
+        case .callout:
+            guard
+                let fields = jsonObject(value),
+                let text = payloadString(fields["text"])
+            else { return unavailable() }
+            
             let severity = payloadString(fields["severity"]) ?? "info"
-            return (.callout(.init(
+            let callout = Callout.init(
                 severity: Callout.Severity(rawValue: severity) ?? .info,
-                title: payloadString(fields["title"]), text: text
-            )), caption)
-        case "application/vnd.indice.confirm+json":
-            guard let fields = jsonObject(value) else { return (.unavailable(mediaType: type), caption) }
-            return (.confirmation(.init(
+                title: payloadString(fields["title"]),
+                text: text)
+            
+            return (.callout(callout), caption)
+            
+        case .confirmation:
+            guard let fields = jsonObject(value) else {
+                return unavailable()
+            }
+            
+            let confirmation = Confirmation(
                 prompt: payloadString(fields["prompt"]),
                 confirmText: payloadString(fields["confirmText"]) ?? "Yes",
-                cancelText: payloadString(fields["cancelText"]) ?? "No"
-            )), caption)
+                cancelText: payloadString(fields["cancelText"]) ?? "No")
+            
+            return (.confirmation(confirmation), caption)
+                    
         default: break
         }
 
         // `image+json` is the web client's image envelope. Also accept the older
         // persisted url/alt spellings; raw image/* parts already carry their URI.
-        if type == "application/vnd.indice.image+json" {
+        if contentType == .image {
             guard let image = try? JSONDecoder().decode(ImageReference.self, from: Data(value.utf8)),
-                  let uri = image.uri ?? image.url else { return (.unavailable(mediaType: type), caption) }
+                  let uri = image.uri ?? image.url
+            else { return unavailable() }
+            
             return (imageContent(uri, declaredType: nil), nonempty(image.caption) ?? nonempty(image.alt) ?? caption)
         }
 
@@ -99,23 +148,35 @@ public enum ChatContentMapper {
         // Classify an entire data URI, never search arbitrary prose for "data:".
         // The API already provides boundaries in parts; splitting concatenated
         // response.text would lose them and could reinterpret ordinary text/code.
-        if trimmed.prefix(5).lowercased() == "data:", type == nil || type?.hasPrefix("text/") == true || type == "text" {
-            guard let uri = DataURI(trimmed) else { return (.unavailable(mediaType: type), caption) }
+        if trimmed.prefix(5).lowercased() == "data:", type == nil || type?.hasPrefix("text/") == true || contentType == .text {
+            guard let uri = DataURI(trimmed) else {
+                return unavailable()
+            }
+            
             if uri.mediaType.hasPrefix("image/") {
                 return (.imageData(uri.data, mediaType: uri.mediaType), caption)
             }
-            guard ["text/html", "text/plain", "text/markdown", "text"].contains(uri.mediaType) else {
-                return (.unsupported(mediaType: uri.mediaType), caption)
+            
+            guard let uriType = ContentType(rawValue: uri.mediaType) else {
+                return unsupported(mediaType: uri.mediaType)
             }
-            guard let text = uri.text else { return (.unavailable(mediaType: uri.mediaType), caption) }
+            
+            guard [ContentType.html, .plainText, .markdown, .text].contains(uriType) else {
+                return unsupported(mediaType: uri.mediaType)
+            }
+            
+            guard let text = uri.text else {
+                return unavailable(mediaType: uri.mediaType)
+            }
+            
             return (textContent(text, type: uri.mediaType), caption)
         }
 
-        switch type {
-        case nil, "text/plain": return (.text(value), caption)
-        case "text/markdown", "text": return (.markdown(value), caption)
-        case "text/html": return (.html(value), caption)
-        default: return (.unsupported(mediaType: type), caption)
+        return switch contentType {
+        case .plainText       : (.text(value), caption)
+        case .markdown, .text : (.markdown(value), caption)
+        case .html            : (.html(value), caption)
+        default               : type == nil ? (.text(value), caption) : unsupported()
         }
     }
 
@@ -124,7 +185,11 @@ public enum ChatContentMapper {
     }
 
     private static func payloadString(_ value: JSONValue?) -> String? {
-        guard case .string(let text) = value, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        guard
+            let text = value?.stringValue,
+            !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return nil }
+        
         return text
     }
 
@@ -227,12 +292,13 @@ private struct DataURI {
     var text: String? {
         let encoding: String.Encoding
         switch charset {
-        case nil, "utf-8", "utf8": encoding = .utf8
-        case "us-ascii", "ascii": encoding = .ascii
-        case "iso-8859-1", "latin1": encoding = .isoLatin1
-        case "windows-1252": encoding = .windowsCP1252
+        case nil, "utf-8", "utf8"   : encoding = .utf8
+        case "us-ascii", "ascii"    : encoding = .ascii
+        case "iso-8859-1", "latin1" : encoding = .isoLatin1
+        case "windows-1252"         : encoding = .windowsCP1252
         default: return nil
         }
+        
         return String(data: data, encoding: encoding)
     }
 

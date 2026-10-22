@@ -11,14 +11,28 @@ public enum UIText {
     public typealias Localized = String.LocalizationValue
     
     case screen(Screen)
+    case utility(Utility)
+    
+    
     
     public var localizationKey: Localized {
         get {
             switch self {
-            case .screen(let value): value.value
+            case .screen (let value): value.value
+            case .utility(let value): value.rawValue
             }
         }
     }
+    
+    
+    public enum Utility: Localized {
+        case dateToday = "utility.date.today"
+        case dateYesterday = "utility.date.yesterday"
+        
+        case mediaTypeUnavailable = "utility.media_type.unavailable"
+        case mediaTypeLoading = "utility.media_type.loading"
+    }
+    
     
     public enum Screen {
         case history(History)
@@ -32,17 +46,30 @@ public enum UIText {
         }
         
         public enum History: Localized {
-            case navTitle = "screen.history.nav_title"
-            case unnamed  = "screen.history.session.unnamed"
+            case navTitle = "screen.history.nav.title"
+            case unnamed  = "screen.history.session.title.unnamed"
+            case newChat  = "screen.history.action.new_chat"
         }
         
         public enum Session: Localized {
-            case navTitle = "screen.session.nav_title"
+            case navTitle = "screen.session.nav.title.unnamed"
             case thinking = "screen.session.thinking"
             case inputPrompt = "screen.session.input.prompt"
             
+            case citationsCollapse = "screen.session.citations.collapse"
+            case multipleChoiceCTA = "screen.session.multiple_choice.continue"
+            
+            case greetingsTitlePrefix = "screen.session.greetings.title_prefix"
+            case greetingsDescription = "screen.session.greetings.description"
+            
+            case messageStatusStoppedPartialReply = "screen.session.message.status.stopped_partial"
+            case messageStatusIncompleteReply = "screen.session.message.status.incomplete"
+            
             case emptySessionPrefix  = "screen.session.empty_prefix"
             case emptySessionMessage = "screen.session.empty_message"
+            
+            case accessibilityOpenHistory = "screen.session.open_history.accessibility"
+            case accessibilityOpenNewChat = "screen.session.open_new_chat.accessibility"
         }
     }
 }
@@ -50,6 +77,8 @@ public enum UIText {
 
 public extension String {
     init(_ uiText: UIText) {
-        self.init(localized: uiText.localizationKey)
+        self.init(
+            localized: uiText.localizationKey,
+            bundle: .module)
     }
 }

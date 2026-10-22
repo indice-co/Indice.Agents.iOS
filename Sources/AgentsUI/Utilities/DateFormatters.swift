@@ -22,11 +22,11 @@ public struct ContextualDateFormat: FormatStyle {
     
     public func format(_ value: Date) -> String {
         if Calendar.autoupdatingCurrent.isDateInToday(value) {
-            return String(localized: "Today")
+            return String(.utility(.dateToday))
         }
         
         if Calendar.autoupdatingCurrent.isDateInYesterday(value) {
-            return String(localized: "Yesterday")
+            return String(.utility(.dateYesterday))
         }
         
         return value.formatted(date: dateStyle, time: timeStyle)

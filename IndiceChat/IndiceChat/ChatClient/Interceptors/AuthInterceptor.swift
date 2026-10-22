@@ -12,17 +12,34 @@ import NetworkUtilities
 // TODO: Expose NetworkUtilities via the NetworkClient import.
 
 
+internal final class ProviderWrapper<T>: Sendable {
+    var operation: (@Sendable () async -> T?)? = nil
+    func callAsFunction() async -> T? { await operation?() }
+}
+
+
 final class AuthInterceptor: NetworkClient.Interceptor {
     
-    private let tokenProvider: @Sendable () async -> String?
-    private let authProvider : @Sendable () async -> IdentityClient.Authorization?
+    // private let tokenProvider: @Sendable () async -> String?
+    // private let authProvider : @Sendable () async -> IdentityClient.Authorization?
+    
+    private let tokenProvider: ProviderWrapper<String>
+    private let  authProvider: ProviderWrapper<IdentityClient.Authorization>
+    
+    // init(
+    //     tokenProvider: @Sendable @escaping () async -> String?,
+    //     authProvider: @Sendable @escaping () async -> IdentityClient.Authorization?
+    // ) {
+    //     self.tokenProvider = tokenProvider
+    //     self.authProvider = authProvider
+    // }
     
     init(
-        tokenProvider: @Sendable @escaping () async -> String?,
-        authProvider: @Sendable @escaping () async -> IdentityClient.Authorization?
+        tokenProvider:  ProviderWrapper<String>,
+         authProvider:  ProviderWrapper<IdentityClient.Authorization>,
     ) {
         self.tokenProvider = tokenProvider
-        self.authProvider = authProvider
+        self.authProvider  = authProvider
     }
     
     func process<T>(_ request: URLRequest, next: @concurrent (URLRequest) async throws -> NetworkClient.Response<T>) async throws -> NetworkClient.Response<T> where T : Sendable {

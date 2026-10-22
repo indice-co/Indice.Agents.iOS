@@ -16,9 +16,9 @@ public struct AgentInfo: APIModel, Hashable {
 
     public init(
         name: String,
-        description: String,
-        inputContentTypes: [String],
-        outputContentTypes: [String],
+        description: String = "",
+        inputContentTypes: [String] = [],
+        outputContentTypes: [String] = [],
         capabilities: [AgentCapability]? = nil,
         domains: [String]? = nil,
         tags: [String]? = nil,

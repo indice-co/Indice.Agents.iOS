@@ -39,6 +39,11 @@ extension AsyncProcessor {
             }
         }
     }
+    
+    func cancelAllTasks() {
+        tasks.forEach({ $1.cancel() })
+        tasks.removeAll(keepingCapacity: true)
+    }
 }
 
 

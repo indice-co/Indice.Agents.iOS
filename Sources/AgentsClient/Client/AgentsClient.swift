@@ -12,26 +12,28 @@ import NetworkUtilities
 
 public final class AgentsClient: @unchecked Sendable {
     
-    
-    final actor AgentSession {
-        
-    }
-    
-    
     public typealias Error = AgentsError
     public typealias NetworkProcessor = RequestProcessor & StreamProcessor
-    
+
+    private let accessTokenProvider: AccessTokenProvider
     private let servicesLock = ReentrantSectionLock()
     private let configuration: Configuration
     private let processorBuilder: () -> NetworkProcessor
-    
 
+    public func supports(_ option: Options) -> Bool {
+        configuration.options.contains(option)
+    }
+    
     public init(
         configuration: Configuration,
         processorBuilder: @escaping () -> NetworkProcessor
     ) {
-        self.configuration    = configuration
-        self.processorBuilder = { ProcessorWrapper(actor: processorBuilder()) }
+        let accessTokenProvider = configuration.userContext.createAccessTokenProvider()
+
+        self.configuration       = configuration
+        self.accessTokenProvider = accessTokenProvider
+        
+        self.processorBuilder = { ProcessorWrapper(actor: processorBuilder(), provider: accessTokenProvider) }
     }
     
     private lazy var networkClient: NetworkProcessor = processorBuilder()
@@ -44,7 +46,9 @@ public final class AgentsClient: @unchecked Sendable {
                 return chatsServiceInstance
             }
             
-            let service = ChatService(repository: .init(
+            let service = ChatService(
+                sessionStore: accessTokenProvider as? SessionStorageProxy,
+                repository: .init(
                 endpoint: self.configuration.baseURL,
                 client: networkClient))
             
@@ -123,20 +127,23 @@ private final class ProcessorWrapper: AgentsClient.NetworkProcessor {
     // TODO: use guest session if no other access token is present
     
     let actor: AgentsClient.NetworkProcessor
+    let provider: AccessTokenProvider
     
-    init(actor: AgentsClient.NetworkProcessor) { self.actor = actor }
+    init(actor: AgentsClient.NetworkProcessor, provider: AccessTokenProvider) {
+        self.actor    = actor
+        self.provider = provider
+    }
     
     func fetch(request: URLRequest) async throws -> Response<()> {
-        try await actor.fetch(request: request)
+        try await actor.fetch(request: try await provider.inject(into: request))
     }
     
     func fetch<D: Decodable>(request: URLRequest) async throws -> Response<D> {
-        try await actor.fetch(request: request)
+        try await actor.fetch(request: try await provider.inject(into: request))
     }
     
     func openSSEStream<Payload: Decodable & Sendable>(request: URLRequest) async throws -> StreamResponse<Payload> {
-        try await actor.openSSEStream(request: request)
+        try await actor.openSSEStream(request: try await provider.inject(into: request))
     }
     
 }
-

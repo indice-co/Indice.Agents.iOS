@@ -63,6 +63,8 @@ public enum Dex {
     
     public struct Name: View {
         
+        @Environment(\.agentsUITheme) private var theme
+        
         var size: Size = .medium
         
         public init(size: Size = .medium) {
@@ -76,7 +78,7 @@ public enum Dex {
                 
                 Circle()
                     .frame(width: size.dotSize, height: size.dotSize)
-                    .foregroundStyle(Color.brand)
+                    .foregroundStyle(theme.primaryColor)
             }
             .fixedSize(horizontal: true, vertical: false)
         }

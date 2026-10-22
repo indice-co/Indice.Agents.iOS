@@ -2,7 +2,7 @@ import Foundation
 
 /// Raw API payload from agents.json: `DexChatMessage`.
 public struct DexChatMessage: APIModel, Hashable, Identifiable {
-    public var messageId: String
+    public var messageId: String?
     public var authorName: String?
     public var role: DexChatRole?
     public var content: ChatMessageContent?
@@ -12,12 +12,12 @@ public struct DexChatMessage: APIModel, Hashable, Identifiable {
     public var sources: [SourceDocumentLink]?
 
     /// mirror of `messageId` property, to conform to Identifiable.
-    public var id: String {
+    public var id: String? {
         messageId
     }
     
     public init(
-        messageId: String,
+        messageId: String?,
         authorName: String? = nil,
         role: DexChatRole? = nil,
         content: ChatMessageContent? = nil,
@@ -42,7 +42,7 @@ public struct DexChatMessage: APIModel, Hashable, Identifiable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        messageId = try container.decode(String.self, forKey: .messageId)
+        messageId = try container.decodeIfPresent(String.self, forKey: .messageId)
         authorName = try container.decodeIfPresent(String.self, forKey: .authorName)
         role = try container.decodeIfPresent(DexChatRole.self, forKey: .role)
         content = try container.decodeIfPresent(ChatMessageContent.self, forKey: .content)

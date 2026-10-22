@@ -41,8 +41,36 @@ public struct ChatContentItemView: View, Equatable {
         self.isStreaming = isStreaming
     }
     
+    #if DEBUG
+    @ViewBuilder
+    private func ItemTypeDescription(_ type: ChatContentItem.Content) -> some View {
+        let text = switch type {
+        case .text: "text"
+        case .markdown: "markdown"
+        case .html: "html"
+        case .imageData: "imageData"
+        case .imageURL: "imageURL"
+        case .multipleChoice: "multipleChoice"
+        case .callout: "callout"
+        case .confirmation: "confirmation"
+        case .unsupported(let type): "unsupported - \(type, default: "no type provided")"
+        case .unavailable(let type): "unavailable - \(type, default: "no type provided")"
+        }
+
+        Text(text)
+            .font(.footnote)
+            .padding(4)
+            .background(Color.gray, in: .capsule)
+    }
+    
+    #endif
+    
     public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            #if DEBUG && false
+            ItemTypeDescription(item.content)
+            #endif
+            
             switch item.content {
             case .text(let text):
                 ChatItem.RawText(value: text)
@@ -94,7 +122,9 @@ public struct ChatContentItemView: View, Equatable {
             }
             
             if let caption = item.caption {
-                Text(caption).font(.caption).foregroundStyle(.secondary)
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -109,11 +139,19 @@ enum ChatItem {
         let isLoading: Bool
         let mediaType: String?
         
+        private var unavailableMessage: String {
+            String(.utility(.mediaTypeUnavailable)) + "\(mediaType, default: "-")"
+        }
+        
+        private var loadingMessage: String {
+            String(.utility(.mediaTypeLoading))
+        }
+        
         var body: some View {
             if isLoading {
-                ProgressView("Loading content…").font(.caption)
+                ProgressView(loadingMessage).font(.caption)
             } else {
-                Label("Unavailable Mmedia Type \(mediaType ?? "-")", systemImage: "photo")
+                Label(unavailableMessage, systemImage: "photo")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(8)
@@ -131,17 +169,14 @@ enum ChatItem {
     }
     
     struct Markdown: View {
-        let value: String
+        private let value: AttributedString
         
-        private var resolved: AttributedString {
-            (try? AttributedString(
-                markdown: value,
-                options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
-            ?? AttributedString(value)
+        init(value: String) {
+            self.value = AttributedString(markdown: value, fallback: .plainText)
         }
         
         var body: some View {
-            Text(resolved)
+            Text(value)
                 .textSelection(.enabled)
         }
     }
@@ -294,7 +329,8 @@ enum ChatItem {
             case negative
         }
         
-        @Environment(\.chatResponder) var chatResponder
+        @Environment(\.chatResponder) private var chatResponder
+        @Environment(\.agentsUITheme) private var theme
         
         let prompt: String?
         let positive: String
@@ -323,7 +359,7 @@ enum ChatItem {
                     Button(action: { onChoice(.positive) }) {
                         Text(positive).frame(maxWidth: .infinity)
                     }
-                    .buttonStyleGlassOrFallback(Color.brand)
+                    .buttonStyleGlassOrFallback()
                     
                     Button(action: { onChoice(.negative) }) {
                         Text(negative)
@@ -342,7 +378,8 @@ enum ChatItem {
     
     struct MultipleChoices: View {
         
-        @Environment(\.chatResponder) var chatResponder
+        @Environment(\.chatResponder) private var chatResponder
+        @Environment(\.agentsUITheme) private var theme
         
         @State private var selected: String?
         
@@ -379,7 +416,7 @@ enum ChatItem {
                             
                             SwiftUI
                                 .Image(systemName: isSelected ? "record.circle" : "circle")
-                                .foregroundStyle(isSelected ? Color.brand : .primary)
+                                .foregroundStyle(isSelected ? theme.primaryColor : .primary)
                             
                             Text(option)
                         }
@@ -389,10 +426,10 @@ enum ChatItem {
                 .buttonStyle(.plain)
  
                 Button(action: submit) {
-                    Text("Continue")
+                    Text(.screen(.session(.multipleChoiceCTA)))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyleGlassOrFallback(Color.brand)
+                .buttonStyleGlassOrFallback()
                 .padding(.top, 6)
                 .disabled(!canSubmit)
             }
@@ -433,6 +470,5 @@ struct Showcase: View {
         }
     }
 }
-
 
 #Preview { Showcase() }

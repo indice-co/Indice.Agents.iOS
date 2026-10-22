@@ -108,7 +108,7 @@ final class HistoryModel: ObservableObject {
         })
     }
     
-    func delete(item: borrowing ConversationListItem) {
+    func delete(item: borrowing ConversationListItem, onSuccess: (() -> Void)? = nil) {
         guard deleteTask == nil else { return }
         guard let id = item.id  else { return }
         
@@ -125,6 +125,10 @@ final class HistoryModel: ObservableObject {
                 try await self.client
                     .chatsService
                     .delete(chatID: id)
+                
+                if let onSuccess {
+                    await MainActor.run { onSuccess() }
+                }
             } catch {
                 await MainActor.run { [weak self] in
                     guard let self else { return }

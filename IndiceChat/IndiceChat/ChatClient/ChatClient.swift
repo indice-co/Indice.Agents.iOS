@@ -16,30 +16,27 @@ final class ChatClient: @unchecked Sendable {
     
     private let client: IdentityClient::Client
     
-    private(set) var tokens: PersistentTokenStorage!
-    private(set) var identity: IdentityClient!
-    private(set) var network: NetworkClient!
-    private(set) var agents: AgentsClient!
+    let tokens: any TokenStorage
+    let identity: IdentityClient
+    let network: NetworkClient
+    let agents: AgentsClient
     
     init() {
-        self.client = .init(
+        let client = IdentityClient::Client(
             id: Bundle.clientId,
             secret: Bundle.clientSecret,
             userScope: .defaultUserScopes + ["agents", "chat"],
             appScope: [.identity],
             urls: .init(commonForRedirectScheme: "indice.mobile"))
         
-        let tokenStorage = PersistentTokenStorage()
-        
-        let tokenProvider: @Sendable () async -> String? = { tokenStorage.authorization }
-        let authProvider : @Sendable () async -> IdentityClient.Authorization? = { [weak self] in
-            await self?.identity.authService
-        }
+        let tokenStorage  = /*EphemeralTokenStorage.ephemeral*/ PersistentTokenStorage()
+        let tokenProvider = ProviderWrapper<String>()
+        let authProvider = ProviderWrapper<IdentityClient.Authorization>()
         
         let interceptors: [NetworkClient.Interceptor] = [
             AuthInterceptor(
                 tokenProvider: tokenProvider,
-                authProvider: authProvider)
+                authProvider : authProvider)
         ]
         
         let network = NetworkClient(
@@ -59,14 +56,22 @@ final class ChatClient: @unchecked Sendable {
         let agents = AgentsClient(
             configuration: .init(
                 baseURL: URL(string: "https://agents.indice.gr")!,
-                userContext: .guestSession
+                // userContext: .accessToken({ tokenStorage.authorization }),
+                userContext: .implicit,
+                options: .all,
             ),
             processorBuilder: { network })
         
+        self.client = client
         self.tokens = tokenStorage
         self.network  = network
         self.identity = identity
         self.agents = agents
+        
+        // After init
+        
+        tokenProvider.operation = { tokenStorage.authorization }
+        authProvider.operation  = { [weak identity] in identity?.authService }
     }
     
     
@@ -84,20 +89,4 @@ final class ChatClient: @unchecked Sendable {
             codeVerifier: verifier,
             redirectUri: client.urls!.authorization!))
     }
-
 }
-
-
-import NetworkUtilities
-
-extension NetworkClient: @retroactive IdentityClient::RequestProcessor {
-    public func process(request: URLRequest) async throws {
-        try await self.fetch(request: request).item
-    }
-    
-    public func process<T>(request: URLRequest) async throws -> T where T : Decodable, T : Sendable {
-        try await self.fetch(request: request).item
-    }
-}
-
-

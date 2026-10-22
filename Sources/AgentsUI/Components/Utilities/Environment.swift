@@ -20,6 +20,11 @@ extension View {
 }
 
 
+extension EnvironmentValues {
+    @Entry
+    var useGlassStyleIfAvailable = true
+}
+
 
 import AgentsModels
 
@@ -27,3 +32,5 @@ protocol ChatSelectionResponder: AnyObject {
     func response(withMessage message: String)
     func score(_ score: MessageScore, messageId: DexChatMessage.ID)
 }
+
+

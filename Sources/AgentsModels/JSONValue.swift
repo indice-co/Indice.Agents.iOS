@@ -10,7 +10,7 @@ public enum JSONValue: APIModel, Hashable {
     case string(String)
     case array([JSONValue])
     case object([String: JSONValue])
-
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if container.decodeNil() { self = .null }
@@ -34,4 +34,55 @@ public enum JSONValue: APIModel, Hashable {
         case .object(let value): try container.encode(value)
         }
     }
+}
+
+public extension JSONValue {
+    var boolValue: Bool? {
+        if case .bool(let value) = self {
+            return value
+        }
+        
+        return nil
+    }
+    
+    var integerValue: Int64? {
+        if case .integer(let value) = self {
+            return value
+        }
+        
+        return nil
+    }
+    
+    var numberValue: Decimal? {
+        if case .number(let value) = self {
+            return value
+        }
+        
+        return nil
+    }
+    
+    var stringValue: String? {
+        if case .string(let value) = self {
+            return value
+        }
+        
+        return nil
+    }
+    
+    var arrayValue: [JSONValue]? {
+        if case .array(let value) = self {
+            return value
+        }
+        
+        return nil
+    }
+    
+    var objectValue: [String: JSONValue]? {
+        if case .object(let value) = self {
+            return value
+        }
+        
+        return nil
+    }
+    
 }

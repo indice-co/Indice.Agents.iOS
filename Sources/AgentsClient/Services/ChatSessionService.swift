@@ -25,8 +25,10 @@ public actor ChatSessionService {
         public let id: UUID
         public var value: DexChatMessage {
             didSet {
-                items = ChatContentMapper.items(for: value.content,
-                    previousParts: oldValue.content?.parts ?? [], previousItems: items)
+                items = ChatContentMapper.items(
+                    for: value.content,
+                    previousParts: oldValue.content?.parts ?? [],
+                    previousItems: items)
             }
         }
         public var delivery: Delivery
@@ -79,6 +81,7 @@ public actor ChatSessionService {
     public private(set) var chatID: UUID?
     public private(set) var lastResponse: DexChatResponse?
 
+    private let sessionStore: GuestSessionStore?
     private let repository: ChatRepository
     private var history: [Message]
     private var metadataValue: ChatSessionMetadata
@@ -90,11 +93,13 @@ public actor ChatSessionService {
     private let streamUpdateTimeInterval: TimeInterval
 
     init(
+        sessionStore: GuestSessionStore?,
         repository: ChatRepository,
         chatID: UUID?,
         conversation: DexConversation? = nil,
         streamUpdateInterval: TimeInterval = 0.050 /* 50 milliseconds */
     ) {
+        self.sessionStore = sessionStore
         self.repository = repository
         self.chatID = chatID
         self.history = (conversation?.messages ?? []).map { Message(value: $0) }
@@ -238,11 +243,15 @@ public actor ChatSessionService {
         for try await event in stream {
             try Task.checkCancellation()
             switch try await accumulator.consume(event.data) {
-            case .started(let id):
+            case .started(let id, let session):
                 if let chatID, chatID != id {
                     throw AgentsError.invalidStream("Unexpected conversation ID.")
                 }
                 await identifyConversation(id)
+                
+                if let session, let sessionStore {
+                    try await sessionStore.save(session)
+                }
             case .completed(let response): return response
             default: break
             }
@@ -376,8 +385,11 @@ public actor ChatSessionService {
     }
 
     private func applyMetadata(_ conversation: DexConversation, chatID: UUID, revision: UUID) async {
-        guard revision == metadataRevision,
-              conversation.id == nil || conversation.id == chatID else { return }
+        guard
+            revision == metadataRevision,
+            conversation.id == nil || conversation.id == chatID
+        else { return }
+        
         metadataValue = .init(conversation: conversation, chatID: chatID)
         await publishMetadata()
     }

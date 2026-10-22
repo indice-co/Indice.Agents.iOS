@@ -50,18 +50,19 @@ public struct MessageItemView: View {
                         MessageActionsView(
                             onScore: { chatResponder.score($0, messageId: message.value.messageId) },
                             currentScore: message.value.liked.map { $0 ? .positive : .negative })
+                        .padding(.top)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .transition(.opacity)
                     }
                 }
                 
                 if message.delivery == .cancelled {
-                    Text("Stopped — partial reply")
+                    Text(.screen(.session(.messageStatusStoppedPartialReply)))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
                 } else if message.delivery == .interrupted {
-                    Text("Incomplete reply")
+                    Text(.screen(.session(.messageStatusIncompleteReply)))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -72,9 +73,13 @@ public struct MessageItemView: View {
     }
     
     private struct BackgroundApplier: ViewModifier {
+        
+        @Environment(\.useGlassStyleIfAvailable) var useGlass
+        @Environment(\.agentsUITheme) private var theme
+        
         let isUser: Bool
         
-        private let userColor: Color = Color.brand
+        private var userColor: Color { theme.primaryColor }
         private let agentColor: Color = .clear
         
         private let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -85,7 +90,7 @@ public struct MessageItemView: View {
         
         func body(content: Content) -> some View {
             if isUser {
-                if #available(iOS 26, macOS 26, *) {
+                if useGlass, #available(iOS 26, macOS 26, *) {
                     content
                         .padding(.vertical, 8)
                         .padding(.horizontal)

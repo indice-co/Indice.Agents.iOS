@@ -99,7 +99,7 @@ struct JSONPointerPatcher {
 /// socket EOF is not a successful commit and must never be treated as `done`.
 struct ChatStreamAssembler {
     enum Update: Sendable {
-        case started(UUID)
+        case started(UUID, session: GuestSession?)
         case status(String)
         case changed
         case completed(DexChatResponse)
@@ -131,7 +131,7 @@ struct ChatStreamAssembler {
             conversationID = id
             guestSession = frame.guestSession
             
-            return .started(id)
+            return .started(id, session: frame.guestSession)
             
         case .error(let frame):
             hasTerminated = true

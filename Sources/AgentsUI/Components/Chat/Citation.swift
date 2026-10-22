@@ -29,9 +29,13 @@ public struct CitationView: View {
             VStack(alignment: .leading) {
                 HStack(spacing: -10) {
                     if isExpanded {
-                        Text("Collapse \(Image(systemName: "chevron.up"))")
-                            .frame(minHeight: 20)
-                            .padding(.horizontal, 8)
+                        HStack {
+                            Text(.screen(.session(.citationsCollapse)))
+                            Image(systemName: "chevron.up")
+                                .imageScale(.small)
+                        }
+                        .frame(minHeight: 20)
+                        .padding(.horizontal, 8)
                     } else {
                         ForEach(Array(citations.prefix(previewCitationsCount).enumerated()), id: \.offset) { item in
                             if let fav = faviconUrl(item.element.sourceUrl) {

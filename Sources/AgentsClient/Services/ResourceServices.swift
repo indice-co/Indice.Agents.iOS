@@ -4,12 +4,20 @@ import AgentsModels
 public actor AgentsService {
     private let repository: AgentsRepository
     
+    nonisolated
+    public let infoValue = ValueState<[AgentInfo]?>(nil)
+    
     init(repository: AgentsRepository) {
         self.repository = repository
     }
     
-    public func agents() async throws -> [AgentInfo] {
-        try await repository.agents()
+    @discardableResult
+    public func refreshAgentsInfo(force: Bool) async throws -> [AgentInfo] {
+        if !force, let value = infoValue.value {
+            return value
+        }
+        
+        return infoValue.set(try await repository.agents())!
     }
 }
 

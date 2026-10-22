@@ -9,6 +9,8 @@ import SwiftUI
 
 public struct ThinkingBubble: View {
     
+    @Environment(\.agentsUITheme) private var theme
+    
     private let dotSize: CGFloat = 4
     private let offset : CGFloat = .pi * 0.125
     
@@ -78,7 +80,8 @@ public struct ThinkingBubble: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
-                Color.brand
+                theme
+                    .primaryColor
                     .frame(height: 2)
                     .clipShape(.capsule)
             }
@@ -98,7 +101,7 @@ public struct ThinkingBubble: View {
                     let phase = sin(progress * (CGFloat.pi * 2) + (CGFloat(index) * offset))
                     
                     Circle()
-                        .fill(Color.blue)
+                        .fill(theme.primaryColor)
                         .frame(width: dotSize, height: dotSize)
                         .transformEffect(.init(
                             translationX: 0,
@@ -110,9 +113,11 @@ public struct ThinkingBubble: View {
     }
     
     private struct BackgroundApplier<S: Shape>: ViewModifier {
+        @Environment(\.useGlassStyleIfAvailable) var useGlass
+        
         let shape: S
         func body(content: Self.Content) -> some View {
-            if #available(iOS 26, *) {
+            if useGlass, #available(iOS 26, *) {
                 content.glassEffect(.clear.interactive(), in: shape)
             } else {
                 content.background(.thinMaterial, in: shape)

@@ -17,6 +17,13 @@ final class SessionModel: ProcessorObject {
     @Published
     private(set)
     var messages: [ChatSessionService.Message] = []
+
+    @Published
+    private(set)
+    var agents: [AgentInfo] = []
+
+    @Published
+    var selectedAgent: AgentInfo?
     
     @Published
     private(set)
@@ -48,11 +55,20 @@ final class SessionModel: ProcessorObject {
         
         super.init()
         
+        self.client.agentsService
+            .infoValue.publisher()
+            .replaceNil(with: [])
+            .assign(to: &$agents)
+        
         guard let chatId else {
             isReady = true
             return
         }
         
+        self.initializeChat(withID: chatId)
+    }
+
+    private func initializeChat(withID chatId: UUID) {
         self.execute {
             try await $0.client
                 .chatsService
@@ -64,6 +80,51 @@ final class SessionModel: ProcessorObject {
     }
     
     deinit { sendTask?.cancel() }
+    
+    /// Call this when the current chat session might have been deleted
+    /// in order to check and assume a 'nil' chatId if the deleted session is the current one.
+    func deleted(chatId: UUID?) {
+        execute {
+            await $0.chat?.chatID
+        } onSuccess: { receiver, id in
+            guard id != nil, chatId == id else {
+                return
+            }
+            
+            receiver.assume(chatId: nil)
+        }
+    }
+    
+    func assume(chatId: UUID?) {
+        cancelAllTasks()
+        
+        chat = nil
+        sendTask?.cancel()
+        subscriptions.removeAll(keepingCapacity: true)
+        
+        messages    = []
+        metadata    = .init()
+        streamError = nil
+        
+        if let chatId {
+            initializeChat(withID: chatId)
+        }
+    }
+    
+    
+    func updateAgentInfo(force: Bool) {
+        execute {
+            try await $0.client
+                .agentsService
+                .refreshAgentsInfo(force: force)
+        } onSuccess: { receiver, list in
+            if let current = receiver.selectedAgent, list.contains(current) {
+                return
+            }
+            
+            receiver.selectedAgent = list.first
+        }
+    }
 }
 
 
@@ -80,6 +141,10 @@ extension SessionModel: ChatSelectionResponder {
     func post(message: String) {
         guard isReady, !isSending else { return }
         
+        let request = ChatRequest(
+            text: message,
+            agentName: selectedAgent?.name)
+        
         isSending = true
         streamError = nil
         sendTask = Task { [weak self] in
@@ -94,11 +159,13 @@ extension SessionModel: ChatSelectionResponder {
                 if let chat {
                     session = chat
                 } else {
-                    session = await self.client.chatsService.newChat()
+                    session = await self.client
+                        .chatsService
+                        .newChat()
                     setup(chat: session)
                 }
                 try Task.checkCancellation()
-                try await session.sendStream(message: message)
+                try await session.sendStream(request: request)
             } catch is CancellationError {
                 // The service keeps partial text and labels it as stopped.
             } catch {
