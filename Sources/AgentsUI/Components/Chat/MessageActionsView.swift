@@ -22,9 +22,10 @@ public struct MessageActionsView: View {
     }
     
     public var body: some View {
-        HStack {
-            ScoreButtons()
-        }
+        HStack(
+            alignment: .firstTextBaseline,
+            spacing: 16,
+            content: ScoreButtons)
     }
     
     private func scoreColor(for score: MessageScore) -> Color {
@@ -34,7 +35,7 @@ public struct MessageActionsView: View {
     }
     
     private func symbolVariant(for score: MessageScore) -> SymbolVariants {
-        currentScore == score ? .fill : .none
+        currentScore == score ? .circle.fill : .none
     }
     
     private func scale(for score: MessageScore) -> CGSize {
@@ -42,7 +43,7 @@ public struct MessageActionsView: View {
             return .init(width: 1, height: 1)
         }
         
-        let factor: CGFloat = currentScore == score ? 1 : 0.75
+        let factor: CGFloat = currentScore == score ? 1.65 : 0.85
         
         return .init(width: factor, height: factor)
     }
@@ -51,14 +52,15 @@ public struct MessageActionsView: View {
     private func ScoreButtons() -> some View {
         if let onScore {
             Group {
-                Button(action: { onScore(.positive) }) {
+                Button(action: { handleScore(.positive, actor: onScore) }) {
                     Image(systemName: "hand.thumbsup")
                         .symbolVariant(symbolVariant(for: .positive))
                         .foregroundStyle(scoreColor(for: .positive))
                         .scaleEffect(scale(for: .positive), anchor: .center)
+                        .offset(y: -2) // Visible barycenter alignment - kind of.
                 }
                 
-                Button(action: { onScore(.negative) }) {
+                Button(action: { handleScore(.negative, actor: onScore) }) {
                     Image(systemName: "hand.thumbsdown")
                         .symbolVariant(symbolVariant(for: .negative))
                         .foregroundStyle(scoreColor(for: .negative))
@@ -70,4 +72,12 @@ public struct MessageActionsView: View {
         }
     }
     
+    
+    private func handleScore(_ intent: MessageScore, actor: (MessageScore) -> Void) {
+        if intent == self.currentScore {
+            actor(.neutral)
+        } else {
+            actor(intent)
+        }
+    }
 }

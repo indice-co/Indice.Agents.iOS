@@ -59,6 +59,16 @@ func parseMarkdown(_ markdown: String) throws -> AttributedString {
         run[SuperscriptAttribute.self] == true ? run.range : nil
     }
 
+    #if DEBUG && false
+    for (intent, range) in text.runs[\.presentationIntent] {
+        print("MD - CHARACTERS: ", String(text[range].characters))
+
+        for component in intent?.components ?? [] {
+            print("MD - INTENT: ", component.kind, component.identity)
+        }
+    }
+    #endif
+    
     for range in superscriptRanges {
         text[range].font = .footnote.bold()
         text[range].baselineOffset = 6

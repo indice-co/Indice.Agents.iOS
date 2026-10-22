@@ -75,6 +75,7 @@ public struct AgentsHostScreen: View {
             .animation(sidebarAnimation, value: sidebarOpen)
             .accessibilityAction(.escape) { sidebarOpen = false }
         }
+        .withAgentsUITheme(theme)
         .environment(\.eventBus, eventBus)
         .environment(\.useGlassStyleIfAvailable, true)
     }

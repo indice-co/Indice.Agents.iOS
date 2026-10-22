@@ -48,7 +48,7 @@ internal struct ChatRepository: Sendable {
 
     func like(chatID: UUID, messageID: DexChatMessage.ID, request: LikeRequest) async throws {
         try await client.fetch(request: .builder()
-            .put(url: endpoint.appendingPathComponent("api/my/chats/\(chatID)/messages/\(messageID)/like"))
+            .put(url: endpoint.appendingPathComponent("api/my/chats/\(chatID)/messages/\(messageID, default: "")/like"))
             .bodyJson(of: request)
             .build()).item
     }

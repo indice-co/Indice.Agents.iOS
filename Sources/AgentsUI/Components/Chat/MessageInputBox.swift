@@ -174,13 +174,15 @@ struct MessageInputBox: View {
         Button(action: isSend ? send : stop) {
             Image(systemName: isSend ? "arrow.up" : "stop.fill")
                 .padding(12)
-                .background(isSend ? Color.accentColor : .gray, in: .circle)
+                .background(isSend ? theme.primaryColor: .gray, in: .circle)
+                .grayscale((isSend && !canSend) ? 1 : 0)
                 .shadow(radius: 8)
         }
         .modifier(ContentShapeConcentricOrRounded(fallbackCornerRadius: 14))
         .buttonStyle(.plain)
         .disabled(isSend ? !canSend : false)
-        .scaleEffect(isSend ? 1 : 0.85)
+        .scaleEffect((isSend && canSend) ? 1 : 0.85)
+        .animation(.bouncy, value: canSend)
     }
 }
 

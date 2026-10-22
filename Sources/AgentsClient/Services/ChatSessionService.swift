@@ -224,14 +224,14 @@ public actor ChatSessionService {
         try await repository.like(
             chatID: chatID,
             messageID: messageID,
-            request: .init(like: score.isPositive))
+            request: .init(like: score.asValue))
         
         if let index = history.firstIndex(where: { $0.value.messageId == messageID }) {
-            history[index].value.liked = score.isPositive
+            history[index].value.liked = score.asValue
         }
         
         if let index = lastResponse?.messages?.firstIndex(where: { $0.messageId == messageID }) {
-            lastResponse?.messages?[index].liked = score.isPositive
+            lastResponse?.messages?[index].liked = score.asValue
         }
         
         await publishHistory()
