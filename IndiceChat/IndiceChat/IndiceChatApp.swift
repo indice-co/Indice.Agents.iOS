@@ -10,10 +10,12 @@ struct IndiceChatApp: App {
         WindowGroup {
             NavigatorWrapper {
                 //LoginView()
-                AgentsHostScreen(client: state.client.agents)
+                // AgentsHostScreen(client: state.client.agents)
+                Color.clear
             }
             .presentPropagatedErrors()
             .applyLoadingState()
+            // .presentingAgentsUI(.init(client: state.client.agents))
             .environmentObject(state)
         }
     }

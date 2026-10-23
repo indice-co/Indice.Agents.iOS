@@ -33,7 +33,7 @@ public struct SessionScreen<
     }
     
     private var isThinking: Bool {
-        model.isLoading || model.isSending
+        /* model.isLoading || */ model.isSending
     }
     
     public init(
@@ -133,8 +133,11 @@ private extension SessionScreen {
                 isSending: model.isSending,
                 canSend: canSendMessage,
                 send: {
+                    self.focus   = false
+                    let message  = self.message
+                    self.message = ""
+                    
                     model.post(message: message)
-                    message = ""
                 },
                 stop: { model.stop() })
         }
