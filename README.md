@@ -38,6 +38,37 @@ Its Codable representation is for local storage, not a JSON upload body. The API
 requires `markdownSourceFile`; `actualSourceFile` and `actualSourceUrl` are mutually
 exclusive. An ingestion convenience method accepts a local markdown URL.
 
+## Floating Agent UI (iOS)
+
+Create a configuration handle using your configured client, and attach it to a
+stable root view:
+
+```swift
+import AgentsUI
+
+// Keep this alongside the client in your app's state or dependency container.
+let agentsUI = AgentsUIHandle(client: agents, theme: .default)
+
+// In your scene's view hierarchy:
+EntryView()
+    .presentingAgentsUI(agentsUI)
+```
+
+The modifier owns a separate window in the root view's scene. Its bubble stays
+above the app's content and sheets, can be dragged within the safe area, and lets
+touches outside its bounds reach the app. Tapping it opens the Agent UI as a
+sheet; closing returns to the bubble and retains the conversation and draft.
+On iOS 18 and later, the sheet zooms from and back to the bubble's current
+position. Earlier versions use the standard sheet transition. Reduce Motion
+disables the presentation and dismissal animations.
+Keyboard ownership and touch pass-through are restored after either the close
+button or an interactive dismissal completes.
+Removing the modified root view removes the overlay too.
+
+Apply the modifier once per scene. `AgentsUIHandle` currently carries the client
+and theme; window and presentation state belong to the modifier. Supply a new
+handle to change configuration. Changing the client starts a new Agent UI session.
+
 ## Streaming a conversation
 
 ```swift

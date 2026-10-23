@@ -80,6 +80,8 @@ public struct MessageItemView: View {
         let isUser: Bool
         
         private var userColor: Color { theme.primaryColor }
+        private var userTextColor: Color { theme.onPrimaryColor }
+        
         private let agentColor: Color = .clear
         
         private let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -94,11 +96,13 @@ public struct MessageItemView: View {
                     content
                         .padding(.vertical, 8)
                         .padding(.horizontal)
+                        .foregroundStyle(userTextColor)
                         .glassEffect(.regular.tint(color), in: shape)
                 } else {
                     content
                         .padding(.vertical, 8)
                         .padding(.horizontal)
+                        .foregroundStyle(userTextColor)
                         .background(color, in: shape)
                 }
             } else {

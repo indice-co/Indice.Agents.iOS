@@ -26,6 +26,9 @@ public enum UIText {
     
     
     public enum Utility: Localized {
+        case openAgents = "utility.agents.open"
+        case closeAgents = "utility.agents.close"
+
         case dateToday = "utility.date.today"
         case dateYesterday = "utility.date.yesterday"
         

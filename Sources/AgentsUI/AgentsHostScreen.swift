@@ -59,6 +59,7 @@ public struct AgentsHostScreen: View {
                             historyAction: { sidebarOpen = true },
                             newChatAction: { eventBus.sendRequest(.newChat) }))
                 }
+                .navigationViewStyle(.stack)
                 .frame(width: geometry.size.width)
                 .background(.background)
                 .accessibilityHidden(sidebarOpen)

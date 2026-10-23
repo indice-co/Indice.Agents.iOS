@@ -139,7 +139,7 @@ struct MessageInputBox: View {
             } label: {
                 AgentPill(selectedAgent ?? standard)
             }
-            .modifier(MenuButtonStyleProvider(tint: theme.secondaryColor))
+            .modifier(MenuButtonStyleProvider())
         }
     }
     
@@ -174,6 +174,7 @@ struct MessageInputBox: View {
         Button(action: isSend ? send : stop) {
             Image(systemName: isSend ? "arrow.up" : "stop.fill")
                 .padding(12)
+                .foregroundStyle(theme.onPrimaryColor)
                 .background(isSend ? theme.primaryColor: .gray, in: .circle)
                 .grayscale((isSend && !canSend) ? 1 : 0)
                 .shadow(radius: 8)
@@ -221,22 +222,23 @@ private struct ContentShapeConcentricOrRounded: ViewModifier {
 
 private struct MenuButtonStyleProvider: ViewModifier {
     
-    @Environment(\.useGlassStyleIfAvailable) var useGlass
-    
-    let tint: Color?
+    @Environment(\.useGlassStyleIfAvailable) private var useGlass
+    @Environment(\.agentsUITheme)            private var theme
     
     func body(content: Content) -> some View {
         if useGlass, #available(iOS 16, *) {
             content
                 .menuStyle(.button)
                 .menuOrder(.fixed)
-                .buttonStyleGlassOrFallback(tint)
+                .buttonStyleGlassOrFallback(
+                    theme.secondaryColor,
+                    foreground: theme.onSecondaryColor)
         } else {
             content
                 .padding(8)
                 .menuStyle(.borderlessButton)
-                .foregroundStyle(.foreground)
-                .background(tint ?? .clear, in: .capsule)
+                .foregroundStyle(theme.onSecondaryColor)
+                .background(theme.secondaryColor, in: .capsule)
         }
     }
 }
