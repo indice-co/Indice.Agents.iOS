@@ -9,9 +9,8 @@ struct IndiceChatApp: App {
     var body: some Scene {
         WindowGroup {
             NavigatorWrapper {
-                //LoginView()
-                // AgentsHostScreen(client: state.client.agents)
-                Color.clear
+                // LoginView()
+                AgentsHostScreen(client: state.client.agents)
             }
             .presentPropagatedErrors()
             .applyLoadingState()

@@ -8,7 +8,10 @@
 import SwiftUI
 import AgentsClient
 
-public struct AgentsHostScreen: View {
+public struct AgentsHostScreen<
+    AgentAvatar: View,
+    EmptySessionContent: View,
+>: View {
     
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
@@ -18,12 +21,21 @@ public struct AgentsHostScreen: View {
     @State private var eventBus = EventBus()
     @State private var sidebarOpen = false
     
-    let theme : Theme
-    let agents: AgentsClient
+    private let theme : Theme
+    private let agents: AgentsClient
+    private let agentAvatar: () -> AgentAvatar
+    private let emptySessionContent: () -> EmptySessionContent
     
-    public init(client: AgentsClient, theme: Theme = .default) {
-        self.theme  = theme
-        self.agents = client
+    public init(
+        client: AgentsClient,
+        theme: Theme = .default,
+        agentAvatar: @escaping () -> AgentAvatar = { Dex.ImageAndName(size: .small) },
+        emptySessionContent: @escaping () -> EmptySessionContent = { EmptySessionPrompt() }
+    ) {
+        self.theme               = theme
+        self.agents              = client
+        self.agentAvatar         = agentAvatar
+        self.emptySessionContent = emptySessionContent
     }
     
     private var hasHistory: Bool {
@@ -52,12 +64,15 @@ public struct AgentsHostScreen: View {
                 }
                 
                 NavigationView {
-                    SessionScreen(agents)
-                        .focused($focus)
-                        .modifier(ToolbarActionsModifier(
-                            hasHistory: hasHistory,
-                            historyAction: { sidebarOpen = true },
-                            newChatAction: { eventBus.sendRequest(.newChat) }))
+                    SessionScreen(
+                        agents,
+                        agentAvatar: agentAvatar,
+                        emptySessionContent: emptySessionContent)
+                    .focused($focus)
+                    .modifier(ToolbarActionsModifier(
+                        hasHistory: hasHistory,
+                        historyAction: { sidebarOpen = true },
+                        newChatAction: { eventBus.sendRequest(.newChat) }))
                 }
                 .navigationViewStyle(.stack)
                 .frame(width: geometry.size.width)

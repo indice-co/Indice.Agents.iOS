@@ -26,50 +26,41 @@ public struct MessageItemView: View {
     }
     
     public var body: some View {
-        VStack(alignment: isUser ? .trailing : .leading, spacing: 0) {
-            if !isUser {
-                Dex.ImageAndName(size: .small)
-                    .padding(.top, 12)
+        VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
+            ForEach(message.items) { item in
+                ChatContentItemView(
+                    item: item,
+                    isStreaming: message.delivery == .streaming)
+                .equatable()
+                .modifier(BackgroundApplier(isUser: isUser))
+                .withChatResponder(canUseResponderForChoices ? chatResponder : nil)
             }
             
-            VStack(alignment: isUser ? .trailing : .leading, spacing: 6) {
-                ForEach(message.items) { item in
-                    ChatContentItemView(
-                        item: item,
-                        isStreaming: message.delivery == .streaming)
-                    .equatable()
-                    .modifier(BackgroundApplier(isUser: isUser))
-                    .withChatResponder(canUseResponderForChoices ? chatResponder : nil)
-                }
+            if !isUser {
+                CitationView(message: message)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
-                if !isUser {
-                    CitationView(message: message)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    
-                    if let chatResponder, message.delivery == .complete {
-                        MessageActionsView(
-                            onScore: { chatResponder.score($0, messageId: message.value.messageId) },
-                            currentScore: message.value.liked.map { $0 ? .positive : .negative })
-                        .padding(.top)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .transition(.opacity)
-                    }
-                }
-                
-                if message.delivery == .cancelled {
-                    Text(.screen(.session(.messageStatusStoppedPartialReply)))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
-                } else if message.delivery == .interrupted {
-                    Text(.screen(.session(.messageStatusIncompleteReply)))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                if let chatResponder, message.delivery == .complete {
+                    MessageActionsView(
+                        onScore: { chatResponder.score($0, messageId: message.value.messageId) },
+                        currentScore: message.value.liked.map { $0 ? .positive : .negative })
+                    .padding(.top)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .transition(.opacity)
                 }
             }
+            
+            if message.delivery == .cancelled {
+                Text(.screen(.session(.messageStatusStoppedPartialReply)))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+            } else if message.delivery == .interrupted {
+                Text(.screen(.session(.messageStatusIncompleteReply)))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .padding(isUser ? .leading : .trailing)
-        .frame(maxWidth: .infinity, alignment: isUser ? .trailing : .leading)
     }
     
     private struct BackgroundApplier: ViewModifier {
