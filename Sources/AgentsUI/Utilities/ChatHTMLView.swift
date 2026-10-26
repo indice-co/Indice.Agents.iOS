@@ -140,8 +140,7 @@ private struct HTMLFragmentView: UIViewRepresentable {
             }
         }
 
-        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
-                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
             if navigationAction.navigationType == .linkActivated,
                let url = navigationAction.request.url,
                ["https", "http"].contains(url.scheme?.lowercased() ?? "") {

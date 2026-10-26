@@ -23,6 +23,7 @@ public struct SessionScreen<
     @State private var message: String = ""
     @FocusState private var focus
      
+    private let contentDisclaimer: String?
     private let agentAvatar: () -> AgentAvatar
     private let emptySessionContent: () -> EmptySessionContent
     
@@ -40,11 +41,13 @@ public struct SessionScreen<
     
     public init(
         _ client: AgentsClient,
+        contentDisclaimer: String? = nil,
         agentAvatar: @escaping () -> AgentAvatar = { Dex.ImageAndName(size: .small) },
         emptySessionContent: @escaping () -> EmptySessionContent = { EmptySessionPrompt() }
     ) {
         self._model = StateObject(wrappedValue: .init(client, chatId: nil))
         
+        self.contentDisclaimer = contentDisclaimer
         self.agentAvatar = agentAvatar
         self.emptySessionContent = emptySessionContent
     }
@@ -155,6 +158,14 @@ private extension SessionScreen {
                     model.post(message: message)
                 },
                 stop: { model.stop() })
+            
+            
+            Text((contentDisclaimer ?? String(.screen(.session(.erroneousAgentDisclaimer))))
+                .replacingOccurrences(
+                    of: "{AGENT}",
+                    with: model.agentName))
+            .font(.caption2)
+            .opacity(0.5)
         }
         .padding()
     }

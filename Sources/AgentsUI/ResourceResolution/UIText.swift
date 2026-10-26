@@ -71,7 +71,10 @@ public enum UIText {
             case emptySessionPrefix  = "screen.session.empty_prefix"
             case emptySessionMessage = "screen.session.empty_message"
             
+            case erroneousAgentDisclaimer = "screen.session.erroneous_agent.disclaimer"
+            
             case accessibilityOpenHistory = "screen.session.open_history.accessibility"
+            case accessibilityDismissChat = "screen.session.dismiss_chat.accessibility"
             case accessibilityOpenNewChat = "screen.session.open_new_chat.accessibility"
         }
     }
@@ -79,9 +82,7 @@ public enum UIText {
 
 
 public extension String {
-    init(_ uiText: UIText) {
-        self.init(
-            localized: uiText.localizationKey,
-            bundle: .module)
+    init(_ uiText: UIText, ) {
+        self.init(localized: uiText.localizationKey, bundle: .module)
     }
 }

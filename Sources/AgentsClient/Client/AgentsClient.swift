@@ -17,8 +17,9 @@ public final class AgentsClient: @unchecked Sendable {
 
     private let accessTokenProvider: AccessTokenProvider
     private let servicesLock = ReentrantSectionLock()
-    private let configuration: Configuration
     private let processorBuilder: () -> NetworkProcessor
+    
+    public let configuration: Configuration
 
     public func supports(_ option: Options) -> Bool {
         configuration.options.contains(option)

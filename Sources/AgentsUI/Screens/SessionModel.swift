@@ -45,6 +45,10 @@ final class SessionModel: ProcessorObject {
     private(set)
     var streamError: String?
     
+    var agentName: String {
+        client.configuration.agentName
+    }
+    
     private var client: AgentsClient
     private var chat: ChatSessionService?
     private var sendTask: Task<Void, Never>?

@@ -29,12 +29,12 @@ extension AgentsClient {
         
         /// Provide a storage that as a delegate of the guest session's lifecycle.
         /// Save the session on a persistent storage to extend the session's lifecycle beyond the `AgentsClient` instance.
-        case persistent(_ storage: GuestSessionStore)
+        case managed(_ storage: GuestSessionStore)
         
         package func initializeStorage() -> GuestSessionStore {
             switch self {
             case .standard: EphemeralGuestSessionStore()
-            case .persistent(let storage): storage
+            case .managed(let storage): storage
             }
         }
     }
@@ -71,16 +71,19 @@ extension AgentsClient {
     }
     
     public struct Configuration: Sendable {
-        let baseURL: URL
-        let userContext: UserContext
-        let options: Options
+        public let baseURL: URL
+        public let agentName: String
+        public let userContext: UserContext
+        public let options: Options
         
         public init(
             baseURL: URL,
+            agentName: String = "Dex",
             userContext: UserContext = .implicit,
             options: Options = .all
         ) {
             self.baseURL = baseURL
+            self.agentName = agentName
             self.userContext = userContext
             self.options = options
         }
@@ -121,12 +124,16 @@ internal final actor ExternalTokenProvider: AccessTokenProvider {
     }
 }
 
-internal final actor EphemeralGuestSessionStore: GuestSessionStore {
+public final actor EphemeralGuestSessionStore: GuestSessionStore {
     
     private var session: GuestSession?
     
-    func load() async throws -> GuestSession? { session }
-    func save(_ session: GuestSession) async throws { self.session = session }
-    func clear() async throws { self.session = nil }
+    public func load() async throws -> GuestSession? { session }
+    public func save(_ session: GuestSession) async throws { self.session = session }
+    public func clear() async throws { self.session = nil }
 }
 
+
+public extension GuestSessionStore where Self == EphemeralGuestSessionStore {
+    static var ephemeral: EphemeralGuestSessionStore { .init() }
+}

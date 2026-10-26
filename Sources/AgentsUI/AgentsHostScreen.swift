@@ -8,10 +8,34 @@
 import SwiftUI
 import AgentsClient
 
+public struct AgentsHostConfiguration {
+    
+    public enum DismissBehavior {
+        case invalid
+        case custom(dismissRequested: () -> Void)
+    }
+    
+    let theme: Theme
+    let disclaimer: String?
+    let dismissBehavior: DismissBehavior
+    
+    public init(
+        theme: Theme = .default,
+        disclaimer: String? = String(.screen(.session(.erroneousAgentDisclaimer))),
+        dismissBehavior: DismissBehavior = .invalid
+    ) {
+        self.theme = theme
+        self.disclaimer = disclaimer
+        self.dismissBehavior = dismissBehavior
+    }
+}
+
 public struct AgentsHostScreen<
     AgentAvatar: View,
     EmptySessionContent: View,
 >: View {
+    
+    public typealias Configuration = AgentsHostConfiguration
     
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
@@ -21,21 +45,25 @@ public struct AgentsHostScreen<
     @State private var eventBus = EventBus()
     @State private var sidebarOpen = false
     
-    private let theme : Theme
+    private let configuration: Configuration
     private let agents: AgentsClient
     private let agentAvatar: () -> AgentAvatar
     private let emptySessionContent: () -> EmptySessionContent
     
+    private let contentDisclaimer: String?
+    
     public init(
         client: AgentsClient,
-        theme: Theme = .default,
+        configuration: Configuration = .init(),
+        contentDisclaimer: String? = nil,
         agentAvatar: @escaping () -> AgentAvatar = { Dex.ImageAndName(size: .small) },
         emptySessionContent: @escaping () -> EmptySessionContent = { EmptySessionPrompt() }
     ) {
-        self.theme               = theme
+        self.configuration       = configuration
         self.agents              = client
         self.agentAvatar         = agentAvatar
         self.emptySessionContent = emptySessionContent
+        self.contentDisclaimer   = contentDisclaimer
     }
     
     private var hasHistory: Bool {
@@ -66,11 +94,13 @@ public struct AgentsHostScreen<
                 NavigationView {
                     SessionScreen(
                         agents,
+                        contentDisclaimer: contentDisclaimer,
                         agentAvatar: agentAvatar,
                         emptySessionContent: emptySessionContent)
                     .focused($focus)
                     .modifier(ToolbarActionsModifier(
                         hasHistory: hasHistory,
+                        dismissBehavior: configuration.dismissBehavior,
                         historyAction: { sidebarOpen = true },
                         newChatAction: { eventBus.sendRequest(.newChat) }))
                 }
@@ -91,7 +121,7 @@ public struct AgentsHostScreen<
             .animation(sidebarAnimation, value: sidebarOpen)
             .accessibilityAction(.escape) { sidebarOpen = false }
         }
-        .withAgentsUITheme(theme)
+        .withAgentsUITheme(configuration.theme)
         .environment(\.eventBus, eventBus)
         .environment(\.useGlassStyleIfAvailable, true)
     }
@@ -105,32 +135,39 @@ private struct ToolbarActionsModifier: ViewModifier {
     @Environment(\.agentsUITheme) private var theme
     
     let hasHistory: Bool
+    let dismissBehavior: AgentsHostConfiguration.DismissBehavior
+    
     let historyAction: () -> Void
     let newChatAction: () -> Void
     
     func body(content: Content) -> some View {
-        if hasHistory {
-            content.toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+        
+        content.toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if hasHistory {
                     Button(action: historyAction) {
                         Image(systemName: "sidebar.left")
                             .foregroundStyle(theme.primaryColor)
                     }
-                    .accessibilityLabel(String(.screen(
-                        .session(
-                        .accessibilityOpenHistory))))
+                    .accessibilityLabel(String(.screen(.session(.accessibilityOpenHistory))))
                 }
             }
-        } else {
-            content.toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+            
+            ToolbarItem(placement: .topBarTrailing) {
+                if !hasHistory {
                     Button(action: newChatAction) {
                         Image(systemName: "plus")
                             .foregroundStyle(theme.primaryColor)
                     }
-                    .accessibilityLabel(String(.screen(
-                        .session(
-                        .accessibilityOpenNewChat))))
+                    .accessibilityLabel(String(.screen(.session(.accessibilityOpenNewChat))))
+                }
+                
+                if case .custom(let dismissRequested) = dismissBehavior {
+                    Button(action: dismissRequested) {
+                        Image(systemName: "xmark")
+                            .foregroundStyle(theme.primaryColor)
+                    }
+                    .accessibilityLabel(String(.screen(.session(.accessibilityDismissChat))))
                 }
             }
         }

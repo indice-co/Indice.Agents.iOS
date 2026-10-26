@@ -34,6 +34,8 @@ public struct MessageItemView: View {
                 .equatable()
                 .modifier(BackgroundApplier(isUser: isUser))
                 .withChatResponder(canUseResponderForChoices ? chatResponder : nil)
+                .transition(.opacity)
+                .animation(.default, value: item)
             }
             
             if !isUser {
