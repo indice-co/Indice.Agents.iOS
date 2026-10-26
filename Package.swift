@@ -54,10 +54,6 @@ let package = Package(
             ],
         ),
         .testTarget(
-            name: "AgentsUITests",
-            dependencies: ["AgentsUI"]
-        ),
-        .testTarget(
             name: "AgentsClientTests",
             dependencies: ["AgentsClient"],
             swiftSettings: [

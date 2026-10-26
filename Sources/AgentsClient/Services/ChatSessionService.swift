@@ -34,6 +34,10 @@ public actor ChatSessionService {
         public var delivery: Delivery
         public private(set) var items: [ChatContentItem]
 
+        public var isUserMessage: Bool {
+            value.role == .user
+        }
+        
         /// Prose-only convenience for previews/search. Render `items` in the UI:
         /// joining raw API parts would expose HTML and base64 as ordinary text.
         public var text: String {

@@ -11,6 +11,7 @@ import AgentsModels
 
 
 public struct SessionScreen<
+    AgentAvatar: View,
     EmptySessionContent: View
 >: View {
     
@@ -22,6 +23,7 @@ public struct SessionScreen<
     @State private var message: String = ""
     @FocusState private var focus
      
+    private let agentAvatar: () -> AgentAvatar
     private let emptySessionContent: () -> EmptySessionContent
     
     private var canSendMessage: Bool {
@@ -38,9 +40,12 @@ public struct SessionScreen<
     
     public init(
         _ client: AgentsClient,
+        agentAvatar: @escaping () -> AgentAvatar = { Dex.ImageAndName(size: .small) },
         emptySessionContent: @escaping () -> EmptySessionContent = { EmptySessionPrompt() }
     ) {
         self._model = StateObject(wrappedValue: .init(client, chatId: nil))
+        
+        self.agentAvatar = agentAvatar
         self.emptySessionContent = emptySessionContent
     }
     
@@ -49,11 +54,21 @@ public struct SessionScreen<
             LazyVStack(spacing: 24) {
                 ForEach(model.messages) { message in
                     let isLastMessage = message.id == model.messages.last?.id
-                    
-                    MessageItemView(
-                        message: message,
-                        canUseResponderForChoices: isLastMessage)
-                    .id(message.id)
+                    let isUserMessage = message.isUserMessage
+                    VStack(alignment: isUserMessage ? .trailing : .leading, spacing: 0) {
+                        
+                        if !isUserMessage {
+                            agentAvatar()
+                                .padding(.top, 12)
+                        }
+                        
+                        MessageItemView(
+                            message: message,
+                            canUseResponderForChoices: isLastMessage)
+                        .id(message.id)
+                    }
+                    .padding(isUserMessage ? .leading : .trailing)
+                    .frame(maxWidth: .infinity, alignment: isUserMessage ? .trailing : .leading)
                 }
             }
             .padding()
